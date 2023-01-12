@@ -14,7 +14,7 @@
 
 import math
 
-from typing import Iterator, Optional, Sequence, Tuple
+from typing import Iterator, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -91,8 +91,7 @@ class ResponseMap():
     def __init__(
         self,
         records: RecordsInterface,
-        input_column: str,
-        output_column: str
+        columns: List[str]
     ):
         """
         Construct an instance.
@@ -101,21 +100,22 @@ class ResponseMap():
         ----------
         records : RecordsInterface
             records to calculate response time.
-        input_column : str
-            column name which is input.
-        output_column : str
-            column name which is output.
+        columns: List[str]
+            List of column names to be used.
+            first column name is used as input.
+            last column name is used as output.
 
         """
+        self._columns = columns
         d = {}
 
         input_min_time = None
 
         for data in records.data:
-            if input_column not in data.columns or output_column not in data.columns:
+            if not set(self._columns) <= set(data.columns):
                 continue
 
-            input_time, output_time = data.get(input_column), data.get(output_column)
+            input_time, output_time = data.get(self.input_column), data.get(self.output_column)
 
             if input_min_time is None:
                 input_min_time = input_time
@@ -126,8 +126,6 @@ class ResponseMap():
             d[output_time].update(input_time)
 
         self._d = d
-        self._input_column = input_column
-        self._output_column = output_column
 
     def sorted_iter(self) -> Iterator[int]:
         """
@@ -181,7 +179,7 @@ class ResponseMap():
             input column name.
 
         """
-        return self._input_column
+        return self._columns[0]
 
     @property
     def output_column(self) -> str:
@@ -194,7 +192,11 @@ class ResponseMap():
             output column name.
 
         """
-        return self._output_column
+        return self._columns[-1]
+
+    @property
+    def columns(self) -> List[str]:
+        return self._columns
 
 
 class ResponseTime:
@@ -205,10 +207,9 @@ class ResponseTime:
     ----------
     records : RecordsInterface
         records to calculate response time.
-    input_column : str
-        column name for input time.
-    output_column : str
-        column name for output time.
+    columns : str
+        List of column names to be used in return value.
+        If None, the first and last columns are used.
 
     Examples
     --------
@@ -243,8 +244,7 @@ class ResponseTime:
         self,
         records: RecordsInterface,
         *,
-        input_column: Optional[str] = None,
-        output_column: Optional[str] = None
+        columns: Optional[List[str]] = None
     ) -> None:
         """
         Construct an instance.
@@ -253,17 +253,13 @@ class ResponseTime:
         ----------
         records : RecordsInterface
             records to calculate response time.
-        input_column : Optional[str], optional
-            column name which is input, by default None
-            If None, the first column of records is selected.
-        output_column : Optional[str], optional
-            column name which is output, by default None
-            If None, the last column of records is selected.
+        columns : str
+            List of column names to be used in return value.
+            If None, the first and last columns are used.
 
         """
-        input_column = input_column or records.columns[0]
-        output_column = output_column or records.columns[-1]
-        response_map = ResponseMap(records, input_column, output_column)
+        columns = columns or [records.columns[0], records.columns[-1]]
+        response_map = ResponseMap(records, columns)
         self._records = ResponseRecords(response_map)
         self._timeseries = ResponseTimeseries(self._records)
         self._histogram = ResponseHistogram(self._records, self._timeseries)
@@ -289,9 +285,15 @@ class ResponseTime:
         """
         return self._records.to_records(all_pattern)
 
-    def to_response_records(self) -> RecordsInterface:
+    def to_response_records(self, columns: Optional[List[str]] = None) -> RecordsInterface:
         """
         Calculate response records.
+
+        Parameters
+        ----------
+        columns : Optional[List[str]]
+            List of column names to be used in return value.
+            If None, the first and last columns are used.
 
         Returns
         -------
@@ -557,6 +559,10 @@ class ResponseRecords:
     def _output_column(self):
         return self._response_map.output_column
 
+    @property
+    def _columns(self) -> List[str]:
+        return self._response_map.columns
+
     def _create_empty_records(
         self,
         columns: Optional[Sequence[ColumnValue]] = None
@@ -649,13 +655,13 @@ class ResponseTimeseries:
     def to_best_case_timeseries(self):
         records = self._records.to_range_records()
         input_column = records.columns[1]
-        output_column = records.columns[2]
+        output_column = records.columns[-1]
         return self._to_timeseries(input_column, output_column)
 
     def to_worst_case_timeseries(self):
         records = self._records.to_range_records()
         input_column = records.columns[0]
-        output_column = records.columns[2]
+        output_column = records.columns[-1]
         return self._to_timeseries(input_column, output_column)
 
     def _to_timeseries(self, input_column, output_column):
