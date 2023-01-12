@@ -473,13 +473,18 @@ class ResponseRecords:
 
         records = self._create_empty_records(columns)
 
-        def add_records(output_time, input_time_min, input_time_max):
-            record = {
+        def add_records(
+            output_time: int,
+            input_time_min: int,
+            input_time_max: int
+        ) -> None:
+            record_dict = {
                 self._response_map.output_column: output_time,
                 f'{self._input_column}_min': input_time_min,
                 f'{self._input_column}_max': input_time_max,
             }
-            records.append(record)
+
+            records.append(record_dict)
 
         self._create_response_records_core(add_records)
 
@@ -506,12 +511,16 @@ class ResponseRecords:
 
         records = self._create_empty_records(columns)
 
-        def add_records(output_time, input_time_min, input_time_max):
-            record = {
+        def add_records(
+            output_time: int,
+            input_time_min: int,
+            input_time_max: int,
+        ) -> None:
+            record_dict = {
                 self._response_map.output_column: output_time,
                 f'{self._input_column}': input_time_max,
             }
-            records.append(record)
+            records.append(record_dict)
 
         self._create_response_records_core(add_records)
 
@@ -538,12 +547,16 @@ class ResponseRecords:
 
         records = self._create_empty_records(columns)
 
-        def add_records(output_time, input_time_min, input_time_max):
-            record = {
+        def add_records(
+            output_time: int,
+            input_time_min: int,
+            input_time_max: int
+        ):
+            record_dict = {
                     self._response_map.output_column: output_time,
                     f'{self._input_column}': input_time_min,
             }
-            records.append(record)
+            records.append(record_dict)
 
         self._create_response_records_core(add_records)
 
@@ -601,7 +614,11 @@ class ResponseRecords:
     def _create_response_records(self) -> RecordsInterface:
         records = self._create_empty_records()
 
-        def add_records(output_time, input_time_min, input_time_max):
+        def add_records(
+            output_time: int,
+            input_time_min: int,
+            input_time_max: int,
+        ) -> None:
             record = {
                 self._input_column: input_time_min,
                 self._output_column: output_time
