@@ -14,7 +14,7 @@
 
 import math
 
-from typing import Iterator, List, Optional, Sequence, Tuple
+from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -486,8 +486,8 @@ class ResponseRecords:
         columns = [
             ColumnValue(f'{self._input_column}_min'),
             ColumnValue(f'{self._input_column}_max'),
-            ColumnValue(self._response_map.output_column),
         ]
+        columns += [ColumnValue(column) for column in self._columns[1:]]
 
         records = self._create_empty_records(columns)
 
@@ -495,14 +495,11 @@ class ResponseRecords:
             input_time_min: int,
             record: RecordInterface
         ):
-            record_dict = {
-                f'{self._input_column}_min': input_time_min,
-                f'{self._input_column}_max': record.get(self._input_column),
-            }
-            for column in self._columns[1:]:
-                record_dict[column] = record.get(column)
+            record = self._create_worst_to_best_case_record(
+                record, self._columns, input_time_min
+            )
 
-            records.append(record_dict)
+            records.append(record)
 
         self._create_response_records_core(add_records)
 
@@ -522,22 +519,14 @@ class ResponseRecords:
             - {output_column}
 
         """
-        columns = [
-            ColumnValue(f'{self._input_column}'),
-            ColumnValue(self._response_map.output_column),
-        ]
-
-        records = self._create_empty_records(columns)
+        records = self._create_empty_records()
 
         def add_records(
-            input_time_min: int,
+            _: int,
             record: RecordInterface
         ):
-            record_dict = {
-                self._response_map.output_column: record.get(self._output_column),
-                f'{self._input_column}': record.get(self._input_column),
-            }
-            records.append(record_dict)
+            record_best_case = self._create_best_case_record(record, self._columns)
+            records.append(record_best_case)
 
         self._create_response_records_core(add_records)
 
@@ -557,22 +546,15 @@ class ResponseRecords:
             - {output_column}
 
         """
-        columns = [
-            ColumnValue(f'{self._input_column}'),
-            ColumnValue(self._response_map.output_column),
-        ]
-
-        records = self._create_empty_records(columns)
+        records = self._create_empty_records()
 
         def add_records(
             input_time_min: int,
             record: RecordInterface
         ):
-            record_dict = {
-                    self._response_map.output_column: record.get(self._output_column),
-                    f'{self._input_column}': input_time_min,
-            }
-            records.append(record_dict)
+            record_worst_case = self._create_worst_case_record(
+                record, self._columns, input_time_min)
+            records.append(record_worst_case)
 
         self._create_response_records_core(add_records)
 
@@ -606,24 +588,18 @@ class ResponseRecords:
         records = self._create_empty_records()
 
         for output_time in self._response_map.sorted_iter():
-            record = RecordFactory.create_instance()
             input_time_range = self._response_map.at(output_time)
             record = input_time_range.record
 
-            record_dict = {}
-            record_dict[self._input_column] = input_time_range.min_value
-            for column in self._columns[1:]:
-                record_dict[column] = record.get(column)
-
-            records.append(record_dict)
+            record_worst_case = self._create_worst_case_record(
+                record, self._columns, input_time_range.min_value)
+            records.append(record_worst_case)
 
             if input_time_range.min_value == input_time_range.max_value:
                 continue
 
-            record_dict = {self._input_column: input_time_range.max_value}
-            for column in self._columns[1:]:
-                record_dict[column] = record.get(column)
-            records.append(record)
+            record_best_case = self._create_best_case_record(record, self._columns)
+            records.append(record_best_case)
 
         records.sort_column_order()
 
@@ -636,19 +612,12 @@ class ResponseRecords:
             input_time_min: int,
             record: RecordInterface
         ) -> None:
-            record_ = {
-                self._input_column: input_time_min,
-            }
-            for column in self._columns[1:]:
-                record_[column] = record.get(column)
-            records.append(record_)
+            record_worst_case = self._create_worst_case_record(
+                record, self._columns, input_time_min)
+            records.append(record_worst_case)
 
-            record_ = {
-                self._input_column: record.get(self._input_column),
-            }
-            for column in self._columns[1:]:
-                record_[column] = record.get(column)
-            records.append(record_)
+            record_best_case = self._create_best_case_record(record, self._columns)
+            records.append(record_best_case)
 
         self._create_response_records_core(add_records)
 
@@ -678,6 +647,45 @@ class ResponseRecords:
         records.sort_column_order()
 
         return records
+
+    @staticmethod
+    def _create_best_case_record(
+        record: RecordInterface,
+        columns: List[str]
+    ) -> RecordInterface:
+        record_dict: Dict[str, int] = {}
+        for column in columns:
+            record_dict[column] = record.get(column)
+        return RecordFactory.create_instance(record_dict)
+
+    @staticmethod
+    def _create_worst_case_record(
+        record: RecordInterface,
+        columns: List[str],
+        input_time_min: int
+    ) -> RecordInterface:
+        record_dict: Dict[str, int] = {}
+
+        record_dict[columns[0]] = input_time_min
+        for column in columns[1:]:
+            record_dict[column] = record.get(column)
+        return RecordFactory.create_instance(record_dict)
+
+    @staticmethod
+    def _create_worst_to_best_case_record(
+        record: RecordInterface,
+        columns: List[str],
+        input_time_min: int
+    ) -> RecordInterface:
+        record_dict: Dict[str, int] = {}
+
+        input_min_column = f'{columns[0]}_min'
+        input_max_column = f'{columns[0]}_max'
+        record_dict[input_min_column] = input_time_min
+        record_dict[input_max_column] = record.get(columns[0])
+        for column in columns[1:]:
+            record_dict[column] = record.get(column)
+        return RecordFactory.create_instance(record_dict)
 
 
 class ResponseTimeseries:
