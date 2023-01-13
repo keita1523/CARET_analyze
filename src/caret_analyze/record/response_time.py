@@ -492,14 +492,12 @@ class ResponseRecords:
         records = self._create_empty_records(columns)
 
         def add_records(
-            output_time: int,
             input_time_min: int,
-            input_time_max: int,
             record: RecordInterface
         ):
             record_dict = {
                 f'{self._input_column}_min': input_time_min,
-                f'{self._input_column}_max': input_time_max,
+                f'{self._input_column}_max': record.get(self._input_column),
             }
             for column in self._columns[1:]:
                 record_dict[column] = record.get(column)
@@ -532,14 +530,12 @@ class ResponseRecords:
         records = self._create_empty_records(columns)
 
         def add_records(
-            output_time: int,
             input_time_min: int,
-            input_time_max: int,
             record: RecordInterface
         ):
             record_dict = {
-                self._response_map.output_column: output_time,
-                f'{self._input_column}': input_time_max,
+                self._response_map.output_column: record.get(self._output_column),
+                f'{self._input_column}': record.get(self._input_column),
             }
             records.append(record_dict)
 
@@ -569,13 +565,11 @@ class ResponseRecords:
         records = self._create_empty_records(columns)
 
         def add_records(
-            output_time: int,
             input_time_min: int,
-            input_time_max: int,
             record: RecordInterface
         ):
             record_dict = {
-                    self._response_map.output_column: output_time,
+                    self._response_map.output_column: record.get(self._output_column),
                     f'{self._input_column}': input_time_min,
             }
             records.append(record_dict)
@@ -639,9 +633,7 @@ class ResponseRecords:
         records = self._create_empty_records()
 
         def add_records(
-            output_time: int,
             input_time_min: int,
-            input_time_max: int,
             record: RecordInterface
         ) -> None:
             record_ = {
@@ -652,7 +644,7 @@ class ResponseRecords:
             records.append(record_)
 
             record_ = {
-                self._input_column: input_time_max,
+                self._input_column: record.get(self._input_column),
             }
             for column in self._columns[1:]:
                 record_[column] = record.get(column)
@@ -681,7 +673,7 @@ class ResponseRecords:
             if input_min_time == input_max_time:
                 continue
 
-            callback(output_time, input_min_time, input_max_time, input_time_range.record)
+            callback(input_min_time, input_time_range.record)
 
         records.sort_column_order()
 
