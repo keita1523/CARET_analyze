@@ -741,3 +741,21 @@ class TestResponseTimeseries:
 
             d = to_dict(records)
             assert d == expect
+
+        def test_to_best_case_timeseries(self):
+            response = ResponseTime(
+                create_records(self.records_raw, self.columns),
+                columns=self.column_names
+            )
+            t, latency = response.to_best_case_timeseries()
+            assert list(t) == [20, 35]
+            assert list(latency) == [10, 10]
+
+        def test_to_worst_case_timeseries(self):
+            response = ResponseTime(
+                create_records(self.records_raw, self.columns),
+                columns=self.column_names
+            )
+            t, latency = response.to_worst_case_timeseries()
+            assert list(t) == [5, 20]
+            assert list(latency) == [25, 25]
