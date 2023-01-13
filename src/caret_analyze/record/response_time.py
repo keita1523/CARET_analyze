@@ -130,8 +130,8 @@ class ResponseMap():
 
             if output_time not in d:
                 d[output_time] = TimeRange(input_min_time, input_time, data)
-
-            d[output_time].update(input_time, data)
+            else:
+                d[output_time].update(input_time, data)
 
         self._d = d
 
@@ -307,10 +307,20 @@ class ResponseTime:
         -------
         RecordsInterface
             The best and worst cases are separated into separate columns.
+            Cases where columns is None:
+
             Columns
-            - {input_column}_min
-            - {input_column}_max
-            - {output_column}
+            - {first_column}_min
+            - {first_column}_max
+            - {last_column}
+
+            Cases where columns is specified:
+            Columns
+            - {columns[0]}_min
+            - {columns[0]}_max
+            - columns[1]
+            - ...
+            - columns[n-1]
 
         """
         return self._records.to_range_records()
