@@ -261,9 +261,9 @@ class ResponseTime:
         ----------
         records : RecordsInterface
             records to calculate response time.
-        columns : str
+        columns : Optional[str]
             List of column names to be used in return value.
-            If None, the first and last columns are used.
+            If None, only first and last columns are used.
 
         """
         columns = columns or [records.columns[0], records.columns[-1]]
@@ -287,8 +287,10 @@ class ResponseTime:
             response time records.
             The best and worst cases alternate line by line.
             Columns
-            - {input_column}
-            - {output_column}
+            - {columns[0]}
+            - {columns[1]}
+            - {...}
+            - {columns[n-1]}
 
         """
         return self._records.to_records(all_pattern)
@@ -307,20 +309,13 @@ class ResponseTime:
         -------
         RecordsInterface
             The best and worst cases are separated into separate columns.
-            Cases where columns is None:
 
-            Columns
-            - {first_column}_min
-            - {first_column}_max
-            - {last_column}
-
-            Cases where columns is specified:
             Columns
             - {columns[0]}_min
             - {columns[0]}_max
-            - columns[1]
-            - ...
-            - columns[n-1]
+            - {columns[1]}
+            - {...}
+            - {columns[n-1]}
 
         """
         return self._records.to_range_records()
@@ -457,8 +452,10 @@ class ResponseRecords:
             response time.
             The best and worst cases alternate line by line.
             Columns
-            - {input_column}
-            - {output_column}
+            - {columns[0]}
+            - {columns[1]}
+            - {...}
+            - {columns[n-1]}
 
         """
         if len(self._response_map) == 0:
@@ -478,9 +475,11 @@ class ResponseRecords:
         RecordsInterface
             The best and worst cases are separated into separate columns.
             Columns
-            - {input_column}_min
-            - {input_column}_max
-            - {output_column}
+            - {columns[0]}_min
+            - {columns[0]}_max
+            - {columns[1]}
+            - {...}
+            - {columns[n-1]}
 
         """
         columns = [
@@ -515,8 +514,10 @@ class ResponseRecords:
         -------
         RecordsInterface
             Columns
-            - {input_column}
-            - {output_column}
+            - {columns[0]}
+            - {columns[1]}
+            - {...}
+            - {columns[n-1]}
 
         """
         records = self._create_empty_records()
@@ -542,8 +543,10 @@ class ResponseRecords:
         -------
         RecordsInterface
             Columns
-            - {input_column}
-            - {output_column}
+            - {columns[0]}
+            - {columns[1]}
+            - {...}
+            - {columns[n-1]}
 
         """
         records = self._create_empty_records()
