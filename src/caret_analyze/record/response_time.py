@@ -30,8 +30,8 @@ class TimeRange:
     def __init__(
         self,
         min_value: int,
-        max_value: int,
-        record: RecordInterface
+        record: RecordInterface,
+        input_column: str
     ) -> None:
         """
         Construct an instance.
@@ -45,8 +45,8 @@ class TimeRange:
 
         """
         self._min = min_value
-        self._max = max_value
         self._record = record
+        self._column = input_column
 
     @property
     def max_value(self) -> int:
@@ -59,7 +59,7 @@ class TimeRange:
             maximum value.
 
         """
-        return self._max
+        return self._record.get(self._column)
 
     @property
     def min_value(self) -> int:
@@ -74,7 +74,7 @@ class TimeRange:
         """
         return self._min
 
-    def update(self, value: int, record: RecordInterface) -> None:
+    def update(self, record: RecordInterface) -> None:
         """
         Update range.
 
@@ -84,8 +84,8 @@ class TimeRange:
             value to apply.
 
         """
-        if self._max < value:
-            self._max = value
+        input_value = record.get(self._column)
+        if self.max_value < input_value:
             self._record = record
 
     @property
@@ -129,9 +129,9 @@ class ResponseMap():
                 input_min_time = input_time
 
             if output_time not in d:
-                d[output_time] = TimeRange(input_min_time, input_time, data)
+                d[output_time] = TimeRange(input_min_time, data, self.input_column)
             else:
-                d[output_time].update(input_time, data)
+                d[output_time].update(data)
 
         self._d = d
 
