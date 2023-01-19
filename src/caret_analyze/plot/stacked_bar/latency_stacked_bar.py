@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Sequence, Union
+from typing import Dict, List, Sequence, Tuple, Union
 
 import pandas as pd
 
@@ -41,40 +41,17 @@ class LatencyStackedBar:
         output_list = defaultdict(list)
         object = self._target_objects
         response_time = ResponseTime(object.to_records(), columns=object.column_names)
-        response_records = response_time.to_response_records() # include response time (min, max)
+        response_records = response_time.to_response_records() # include timestamp of response time (best, worst)
         columns = response_records.columns
         record_size = len(response_records.data)
-        output_list2 = {}
         for column_from, column_to in zip(columns[:-1], columns[1:]):
-            # diff = data.data[column_to] - data.data[column_from]
             latency = Latency(response_records, column_from, column_to)
             stacked_bar_records_list.append(latency.to_records())
-            d = defaultdict(list)
-            index = 0
 
             assert record_size == len(latency.to_records())
             for record in latency.to_records():
-                # if '_min' in column_from: # if column_from includes '/topic1/rclcpp_publish_timestamp/0_max'
-                #     d[record.data[column_from]].append(record.data['latency'])
-                #     output_list[index] = [record.data['latency']]
-                # else:
-                #     output_list[index].append(record.data['latency'])
-                # index += 1
-                output_list[column_from].append(record.data['latency'])
+                output_list[column_from].append(record.data['latency'] * 10e-9)
 
-
-        # for column in columns[:-1]:
-        #     for stacked_bar_record in stacked_bar_records_list:
-        #         output_list['']
-
-
-
-        # for column_from, column_to in zip(columns[:-1], columns[1:]):
-
-
-
-
-        # output_list['start timestamp'] = output_list[columns[0]]
         output_list['start timestamp'] = list(range(record_size))
         return output_list, columns[:-1]
 

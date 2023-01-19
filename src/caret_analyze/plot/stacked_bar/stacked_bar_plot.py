@@ -51,30 +51,6 @@ class StackedBarPlot(PlotBase):
     ) -> None:
         self._metrics = metrics
         self._visualize_lib = visualize_lib
-        self._dataframe = []
-
-    #     self._create_dataframe(self._target_objects)
-
-    # def _create_dataframe(
-    #     self,
-    #     path: Path
-    # ):
-
-    #     response_time = ResponseTime(path.to_records(), columns=path.column_names)
-    #     records = response_time.to_response_records() # include response time
-    #     columns = records.columns
-    #     # df = RecordsFactory.create_instance(columns=[
-    #     #     ColumnValue(records.columns)
-    #     # ])
-    #     count = 0
-    #     for data in records.data:
-    #         for column_from, column_to in zip(columns[:-1], columns[1:]):
-    #             diff = data.data[column_to] - data.data[column_from]
-    #             # pass
-    #         count += 1
-
-    #     return
-
 
     def figure(
         self,
