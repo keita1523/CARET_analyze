@@ -32,6 +32,8 @@ from ...record import RecordsInterface
 from ...runtime import (CallbackBase, Communication, Publisher,
                         Subscription, SubscriptionCallback, TimerCallback)
 
+# from caret_analyze.plot.stacked_bar.latency_stacked_bar import LatencyStackedBar
+
 TimeSeriesTypes = Union[CallbackBase, Communication, Union[Publisher, Subscription]]
 
 logger = getLogger(__name__)
@@ -42,6 +44,73 @@ class Bokeh(VisualizeLibInterface):
 
     def __init__(self) -> None:
         pass
+
+    def stacked_bar(
+        self,
+        metrics,
+        xaxis_type: str,
+        ywheel_zoom: bool,
+        full_legends: bool
+    ):
+
+        # d = [0, 1, 4, 9, 16]
+        # p = figure()
+        # p.line(range(len(d)), d) # 第1引数がx軸、第2引数がy軸
+        # return p
+        stacked_bar_dict, y_key = metrics.to_stacked_bar_records_list()
+        fruits = ['Apples', 'Pears', 'Nectarines', 'Plums', 'Grapes', 'Strawberries']
+        x_key: str = 'start timestamp'
+        x_range = [str(i) for i in stacked_bar_dict[x_key]]
+
+        # data = {start_timestamp: [each response time]}
+
+        data = {
+                '2015'   : [2, 1, 4, 3, 2, 4],
+                '2016'   : [5, 3, 4, 2, 4, 6],
+                'fruits' : fruits,
+                '2017'   : [3, 2, 4, 4, 5, 3]
+                }
+        years = ["2015", "2016", "2017"]
+        colors = ["#c9d9d3", "#718dbf", "#e84d60", "#19d9d3", "#118dbf", "#184d60", "#c919d3", "#711dbf", "#e84160"]
+        # colors = ["#c9d9d3", "#718dbf", "#e84d60"]
+        p = figure(x_range=x_range, width=1000, height=500, title="Fruit Counts by Year",
+                toolbar_location=None, tools="hover", tooltips="$name @fruits: @$name")
+
+        p.vbar_stack(y_key, x=x_key, width=0.9, color=colors, source=stacked_bar_dict,
+                    legend_label=y_key)
+
+        # p.y_range.start = 0
+        # p.x_range.range_padding = 0.1
+        # p.xgrid.grid_line_color = None
+        # p.axis.minor_tick_line_color = None
+        # p.outline_line_color = None
+        # p.legend.location = "top_left"
+        # p.legend.orientation = "horizontal"
+
+
+        # print(d)
+        # plot = figure(title="ユーザー構成",
+        #             plot_width=350, plot_height=350,
+        #             x_range=table.index.values,
+        #             toolbar_location=None, tools="hover",
+        #             tooltips="$name @index: @$name")
+        # plot.vbar_stack(table.columns.values,
+        #                 x=table.index.name,
+        #                 legend=[value(x) for x in table.columns],
+        #                 source=table, width=0.7,
+        #                 color=palettes.Category10[4])
+        # plot.xaxis.axis_label = table.index.name
+        # plot.xgrid.grid_line_color = None
+        # plot.yaxis.axis_label = "ユーザー数"
+        # plot.y_range.start = 0
+        # plot.legend.orientation = "vertical"
+        # plot.legend.location = "top_right"
+        # plot.legend.label_height = 12
+        # plot.legend.glyph_height = 12
+        # plot.legend.glyph_width = 12
+        # plot.legend.label_text_font_size = "10pt"
+        return p
+
 
     def timeseries(
         self,

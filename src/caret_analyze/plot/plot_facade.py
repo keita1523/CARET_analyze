@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from logging import getLogger
-from typing import Collection, Union
+from typing import Collection, Optional, Union
 
 from multimethod import multimethod as singledispatchmethod
 
@@ -21,7 +21,9 @@ from .histogram import ResponseTimePlot
 from .plot_base import PlotBase
 from .timeseries import TimeSeriesPlotFactory
 from .visualize_lib import VisualizeLibFactory
-from ..runtime import CallbackBase, Communication, Path, Publisher, Subscription
+from .stacked_bar import StackedBarPlotFactory
+from ..runtime import CallbackBase, Communication, Publisher, Subscription
+from caret_analyze.runtime import Path
 
 logger = getLogger(__name__)
 
@@ -55,6 +57,21 @@ class Plot:
         visualize_lib = VisualizeLibFactory.create_instance()
         plot = TimeSeriesPlotFactory.create_instance(
             list(target_objects), 'period', visualize_lib
+        )
+        return plot
+
+    @staticmethod
+    def create_response_time_stacked_bar_plot(
+        # self,
+        target_object: Path,
+        metrics: str = 'latency',
+
+    ):
+        visualize_lib = VisualizeLibFactory.create_instance()
+        plot = StackedBarPlotFactory.create_instance(
+            target_object,
+            visualize_lib,
+            metrics,
         )
         return plot
 

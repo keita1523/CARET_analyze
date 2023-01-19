@@ -35,3 +35,9 @@ class VisualizeLibInterface(metaclass=ABCMeta):
         full_legends: bool
     ) -> Figure:
         raise NotImplementedError()
+
+    @abstractmethod
+    def stacked_bar(
+        self,
+    ) -> Figure:
+        raise NotImplementedError()
