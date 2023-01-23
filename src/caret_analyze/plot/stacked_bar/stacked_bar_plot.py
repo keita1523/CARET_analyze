@@ -56,7 +56,7 @@ class StackedBarPlot(PlotBase):
         self,
         xaxis_type: str = 'system_time',
         ywheel_zoom: bool = True,
-        full_legends: bool = False
+        full_legends: bool = False,
     ) -> Figure:
         return self._visualize_lib.stacked_bar(
             self._metrics,

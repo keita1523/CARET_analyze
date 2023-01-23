@@ -65,6 +65,7 @@ class Plot:
         # self,
         target_object: Path,
         metrics: str = 'latency',
+        granularity: str = 'node',
 
     ):
         visualize_lib = VisualizeLibFactory.create_instance()
@@ -72,6 +73,7 @@ class Plot:
             target_object,
             visualize_lib,
             metrics,
+            granularity,
         )
         return plot
 

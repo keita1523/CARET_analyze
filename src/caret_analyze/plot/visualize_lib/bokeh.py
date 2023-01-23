@@ -50,24 +50,31 @@ class Bokeh(VisualizeLibInterface):
         metrics,
         xaxis_type: str,
         ywheel_zoom: bool,
-        full_legends: bool
+        full_legends: bool,
     ):
 
         # NOTE: relation betwenn stacked bar graph and data struct
-        # data = {
-        #     'x': [x1, x2, x3],
-        #     'y': [y1, y2, y3]
-        # }
+        # # data = {
+        # #     'x': [x1, x2, x3],
+        # #     'y': [y1, y2, y3]
+        # # }
 
-        # ^               ^
-        # |               |       ^       [] x
-        # |       ^       |       |       [] y
-        # |       |       y2      |
-        # |       y1      ^       y3
-        # |       ^       |       ^
-        # |       |       |       |
-        # |       x1      x2      x3
-        # +----------------------------------->
+        # # ^               ^
+        # # |               |       ^       [] x
+        # # |       ^       |       |       [] y
+        # # |       |       y2      |
+        # # |       y1      ^       y3
+        # # |       ^       |       ^
+        # # |       |       |       |
+        # # |       x1      x2      x3
+        # # +----------------------------------->
+
+        def get_color_generator() -> Generator:
+            color_palette = self._create_color_palette()
+            color_idx = 0
+            while True:
+                yield color_palette[color_idx]
+                color_idx = (color_idx + 1) % len(color_palette)
 
 
         stacked_bar_dict, y_axis_label = metrics.to_stacked_bar_records_list()
@@ -86,7 +93,10 @@ class Bokeh(VisualizeLibInterface):
         x_key: str = 'start timestamp'
         x_range = [str(i) for i in stacked_bar_dict[x_key]]
 
-        colors = ["#c9d9d3", "#718dbf", "#e84d60", "#19d9d3", "#118dbf", "#184d60", "#c919d3", "#711dbf", "#e84160"]
+        colors = []
+        color_generator = get_color_generator()
+        for _ in y_axis_label:
+            colors.append(next(color_generator))
         # p = figure(x_range=x_range, width=1000, height=500, title="Fruit Counts by Year",
         #         toolbar_location=None, tools="hover", tooltips="$name @fruits: @$name")
         p = figure(**fig_args)

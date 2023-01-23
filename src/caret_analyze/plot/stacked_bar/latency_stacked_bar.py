@@ -27,22 +27,42 @@ from collections import defaultdict
 class LatencyStackedBar:
     def __init__(
         self,
-        target_objects: Path
+        target_objects: Path,
+        granularity: str = 'node',
     ) -> None:
         self._target_objects = target_objects
+        self._granularity = granularity
 
 
     @property
     def target_objects(self) -> Path:
         return self._target_objects
 
-    def to_stacked_bar_records_list(self):
+    def to_stacked_bar_records_list(
+        self,
+    ):
         stacked_bar_records_list: List[RecordsInterface] = []
         output_list = defaultdict(list)
         object = self._target_objects
         response_time = ResponseTime(object.to_records(), columns=object.column_names)
         response_records = response_time.to_response_records() # include timestamp of response time (best, worst)
-        columns = response_records.columns
+        raw_columns = response_records.columns
+
+        if self._granularity == 'node':
+            new_clumns = []
+            for column in raw_columns:
+                if '0_min' in column:
+                    new_clumns.append(column)
+                elif 'rclcpp_publish' in column:
+                    new_clumns.append(column)
+                elif 'callback_start' in column:
+                    new_clumns.append(column)
+            new_clumns.append(raw_columns[-1])
+            columns = new_clumns
+        else:
+            columns = raw_columns
+
+        assert len(columns) >= 2
         record_size = len(response_records.data)
         for column_from, column_to in zip(columns[:-1], columns[1:]):
             latency = Latency(response_records, column_from, column_to)
