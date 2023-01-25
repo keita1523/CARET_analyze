@@ -64,15 +64,21 @@ class LatencyStackedBar:
 
         assert len(columns) >= 2
         record_size = len(response_records.data)
+        x_label = []
         for column_from, column_to in zip(columns[:-1], columns[1:]):
             latency = Latency(response_records, column_from, column_to)
-            stacked_bar_records_list.append(latency.to_records())
+            # stacked_bar_records_list.append(latency.to_records())
 
             assert record_size == len(latency.to_records())
             for record in latency.to_records():
+                if '0_max' in column_to:
+                    x_label.append(record.data[columns[0]] * 10e-9)
                 output_list[column_from].append(record.data['latency'] * 10e-9)
 
-        output_list['start timestamp'] = list(range(record_size))
+
+
+        # output_list['start timestamp'] = list(range(record_size))
+        output_list['start timestamp'] = x_label
         return output_list, columns[:-1]
 
     def to_dataframe(self):
