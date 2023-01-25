@@ -54,20 +54,21 @@ class Bokeh(VisualizeLibInterface):
     ):
 
         # NOTE: relation betwenn stacked bar graph and data struct
-        # # data = {
-        # #     'x': [x1, x2, x3],
-        # #     'y': [y1, y2, y3]
+        # # source = {
+        # #     'tracepoint_a': [a1, a2, a3],
+        # #     'tracepoint_b': [b1, b2, b3],
+        # #     'start timestamp': [s1, s2, s3]
         # # }
 
         # # ^               ^
-        # # |               |       ^       [] x
-        # # |       ^       |       |       [] y
-        # # |       |       y2      |
-        # # |       y1      ^       y3
+        # # |               |       ^       [] a
+        # # |       ^       |       |       [] b
+        # # |       |       b2      |
+        # # |       b1      ^       b3
         # # |       ^       |       ^
         # # |       |       |       |
-        # # |       x1      x2      x3
-        # # +----------------------------------->
+        # # |       a1      a2      a3
+        # # +-------s1------s2------s3---------->
 
         def get_color_generator() -> Generator:
             color_palette = self._create_color_palette()
@@ -76,12 +77,8 @@ class Bokeh(VisualizeLibInterface):
                 yield color_palette[color_idx]
                 color_idx = (color_idx + 1) % len(color_palette)
 
-
-        stacked_bar_dict, y_axis_label = metrics.to_stacked_bar_records_list()
-        target_object = metrics._target_objects
         fig_args = {'frame_height': 270,
                     'frame_width': 800}
-
         if ywheel_zoom:
             fig_args['active_scroll'] = 'wheel_zoom'
         else:
@@ -90,45 +87,50 @@ class Bokeh(VisualizeLibInterface):
 
         fig_args['title'] = 'Stacked bar of Response Time.'
 
+        data, y_labels = metrics.to_stacked_bar_records_list()
+
+
+
+        source = ColumnDataSource(data)
+
+
+        # change each latency data into stacked data
+        for _prev, _next in zip(y_labels[:-1], y_labels[1:]):
+            data[_next] = [data[_next][i] + data[_prev][i] for i in range(len(data[_prev]))]
+
         x_key: str = 'start timestamp'
-        x_values = stacked_bar_dict[x_key]
+        x_values = data[x_key]
         new_x_values = []
         first_time = x_values[0]
         for time in x_values:
             new_x_values.append(time - first_time)
-        stacked_bar_dict[x_key] = new_x_values
-        x_values = stacked_bar_dict[x_key]
+        data[x_key] = new_x_values
+        x_values = data[x_key]
 
-        x_distance_list = [(x_values[i+1]-x_values[i]) * 1 - 0.1 for i in range(len(x_values)-1)]
+        x_distance_list = [(x_values[i+1]-x_values[i]) * 0.99 for i in range(len(x_values)-1)]
         x_distance_list.append(x_distance_list[-1])
-        # x_values = [x_values[i] + x_distance_list[i] / 2 for i in range(len(x_values))]
-        stacked_bar_dict[x_key] = x_values
+        x_values = [x_values[i] + x_distance_list[i] / 2 for i in range(len(x_values))]
+        data[x_key] = x_values
 
-        # x_range = [str(i) for i in stacked_bar_dict[x_key]]
-        x_range = stacked_bar_dict[x_key]
 
-        # colors = []
-        # color_generator = get_color_generator()
-        # for _ in y_axis_label:
-        #     colors.append(next(color_generator))
-        # p = figure(x_range=x_range, width=1000, height=500, title="Fruit Counts by Year",
-        #         toolbar_location=None, tools="hover", tooltips="$name @fruits: @$name")
+
         p = figure(**fig_args)
-
-        # # renderer = p.vbar_stack(y_axis_label, x=x_key, width=0.9, color=colors, source=stacked_bar_dict)
-        # renderer = p.vbar_stack(y_axis_label, x=x_key, width=0.9, color=colors, source=stacked_bar_dict,
-        #             legend_label=y_axis_label)
-
-        for prev, now in zip(y_axis_label[:-1], y_axis_label[1:]):
-            stacked_bar_dict[now] = [stacked_bar_dict[now][i] + stacked_bar_dict[prev][i] for i in range(len(stacked_bar_dict[prev]))]
-
 
 
         color_generator = get_color_generator()
+        colors = []
+        # for _ in y_labels:
+        #     colors.append(next(color_generator))
+        data = ColumnDataSource(data)
+        # data.add(colors, 'color')
+        # data.add(y_labels, 'legend')
+        data.add(x_distance_list, 'x_distance_list')
         color = next(color_generator)
-        source = ColumnDataSource(stacked_bar_dict)
-        for label in reversed(y_axis_label):
-            p.vbar(x=x_key, top=label, width=0.9, source=source, color=color)
+        for label in reversed(y_labels):
+            # color = colors[1]
+            # p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label='legend')
+            # p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label='legend')
+            p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color)
             color = next(color_generator)
 
 
@@ -136,13 +138,13 @@ class Bokeh(VisualizeLibInterface):
         num_legend_threshold = 20
         legend_manager = LegendManager()
 
-        # # Processing to move legends out of graph area
-        # # https://stackoverflow.com/questions/46730609/position-the-legend-outside-the-plot-area-with-bokeh
+        # Processing to move legends out of graph area
+        # https://stackoverflow.com/questions/46730609/position-the-legend-outside-the-plot-area-with-bokeh
         # new_legend = p.legend[0]
         # p.legend[0] = None
         # p.add_layout(new_legend, 'right')
 
-        legend_manager.draw_legends(p, num_legend_threshold, full_legends)
+        # legend_manager.draw_legends(p, num_legend_threshold, full_legends)
         return p
 
 
@@ -181,10 +183,10 @@ class Bokeh(VisualizeLibInterface):
         timeseries_records_list = metrics.to_timeseries_records_list(xaxis_type)
 
         # Initialize figure
-        y_axis_label = timeseries_records_list[0].columns[1]
+        y_labels = timeseries_records_list[0].columns[1]
         fig_args = {'frame_height': 270,
                     'frame_width': 800,
-                    'y_axis_label': y_axis_label}
+                    'y_labels': y_labels}
 
         if xaxis_type == 'system_time':
             fig_args['x_axis_label'] = 'system time [s]'
@@ -200,11 +202,11 @@ class Bokeh(VisualizeLibInterface):
             fig_args['active_scroll'] = 'xwheel_zoom'
 
         if isinstance(target_objects[0], CallbackBase):
-            fig_args['title'] = f'Time-line of callbacks {y_axis_label}'
+            fig_args['title'] = f'Time-line of callbacks {y_labels}'
         elif isinstance(target_objects[0], Communication):
-            fig_args['title'] = f'Time-line of communications {y_axis_label}'
+            fig_args['title'] = f'Time-line of communications {y_labels}'
         else:
-            fig_args['title'] = f'Time-line of publishes/subscribes {y_axis_label}'
+            fig_args['title'] = f'Time-line of publishes/subscribes {y_labels}'
 
         p = figure(**fig_args)
 
