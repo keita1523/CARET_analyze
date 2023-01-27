@@ -34,7 +34,6 @@ class StackedBarPlotFactory:
         target_objects: Path,
         visualize_lib: VisualizeLibInterface,
         metrics: str = 'latency',
-        granularity: str = 'node',
     ) -> StackedBarPlot:
         """_summary_
 
@@ -55,7 +54,7 @@ class StackedBarPlotFactory:
         """
         # metrics_: MetricsBase
         if metrics == 'latency':
-            metrics_ = LatencyStackedBar(target_objects, granularity)
+            metrics_ = LatencyStackedBar(target_objects)
             return StackedBarPlot(metrics_, visualize_lib)
         elif metrics == 'percentage':
             # TODO

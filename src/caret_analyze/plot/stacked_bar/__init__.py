@@ -14,8 +14,10 @@
 
 from .stacked_bar_plot import StackedBarPlot
 from .stacked_bar_plot_factory import StackedBarPlotFactory
+from .latency_stacked_bar import LatencyStackedBar
 
 __all__ = [
     'StackedBarPlot',
-    'StackedBarPlotFactory'
+    'StackedBarPlotFactory',
+    'LatencyStackedBar',
 ]

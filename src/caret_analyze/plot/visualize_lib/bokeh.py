@@ -93,6 +93,10 @@ class Bokeh(VisualizeLibInterface):
 
         source = ColumnDataSource(data)
 
+        # change data * 1e-9
+        for key in data.keys():
+            data[key] = [timestamp * 1e-9 for timestamp in data[key]]
+
 
         # change each latency data into stacked data
         for _prev, _next in zip(y_labels[:-1], y_labels[1:]):
@@ -107,10 +111,12 @@ class Bokeh(VisualizeLibInterface):
         data[x_key] = new_x_values
         x_values = data[x_key]
 
+        # set left bottom of bar on the start time
         x_distance_list = [(x_values[i+1]-x_values[i]) * 0.99 for i in range(len(x_values)-1)]
         x_distance_list.append(x_distance_list[-1])
         x_values = [x_values[i] + x_distance_list[i] / 2 for i in range(len(x_values))]
         data[x_key] = x_values
+
 
 
 
@@ -123,14 +129,14 @@ class Bokeh(VisualizeLibInterface):
         #     colors.append(next(color_generator))
         data = ColumnDataSource(data)
         # data.add(colors, 'color')
-        # data.add(y_labels, 'legend')
+        data.add(y_labels, 'legend')
         data.add(x_distance_list, 'x_distance_list')
         color = next(color_generator)
         for label in reversed(y_labels):
             # color = colors[1]
             # p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label='legend')
             # p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label='legend')
-            p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color)
+            p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label=label)
             color = next(color_generator)
 
 
@@ -140,9 +146,9 @@ class Bokeh(VisualizeLibInterface):
 
         # Processing to move legends out of graph area
         # https://stackoverflow.com/questions/46730609/position-the-legend-outside-the-plot-area-with-bokeh
-        # new_legend = p.legend[0]
-        # p.legend[0] = None
-        # p.add_layout(new_legend, 'right')
+        new_legend = p.legend[0]
+        p.legend[0] = None
+        p.add_layout(new_legend, 'right')
 
         # legend_manager.draw_legends(p, num_legend_threshold, full_legends)
         return p
