@@ -54,7 +54,7 @@ class Bokeh(VisualizeLibInterface):
     ):
 
         # NOTE: relation betwenn stacked bar graph and data struct
-        # # source = {
+        # # data = {
         # #     'tracepoint_a': [a1, a2, a3],
         # #     'tracepoint_b': [b1, b2, b3],
         # #     'start timestamp': [s1, s2, s3]
@@ -87,21 +87,18 @@ class Bokeh(VisualizeLibInterface):
 
         fig_args['title'] = 'Stacked bar of Response Time.'
 
-        data, y_labels = metrics.to_stacked_bar_records_list()
+        data, y_labels = metrics.to_stacked_bar_records_dict()
 
 
-
-        source = ColumnDataSource(data)
-
-        # change data * 1e-9
+        # data * 1e-9
         for key in data.keys():
             data[key] = [timestamp * 1e-9 for timestamp in data[key]]
 
-
         # change each latency data into stacked data
-        for _prev, _next in zip(y_labels[:-1], y_labels[1:]):
-            data[_next] = [data[_next][i] + data[_prev][i] for i in range(len(data[_prev]))]
+        for prev_, next_ in zip(y_labels[:-1], y_labels[1:]):
+            data[next_] = [data[next_][i] + data[prev_][i] for i in range(len(data[prev_]))]
 
+        # change x label into the offset time from first time
         x_key: str = 'start timestamp'
         x_values = data[x_key]
         new_x_values = []
@@ -124,25 +121,14 @@ class Bokeh(VisualizeLibInterface):
 
 
         color_generator = get_color_generator()
-        colors = []
-        # for _ in y_labels:
-        #     colors.append(next(color_generator))
         data = ColumnDataSource(data)
-        # data.add(colors, 'color')
         data.add(y_labels, 'legend')
         data.add(x_distance_list, 'x_distance_list')
         color = next(color_generator)
         for label in reversed(y_labels):
-            # color = colors[1]
-            # p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label='legend')
-            # p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label='legend')
             p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label=label)
             color = next(color_generator)
 
-
-        # Draw legends
-        num_legend_threshold = 20
-        legend_manager = LegendManager()
 
         # Processing to move legends out of graph area
         # https://stackoverflow.com/questions/46730609/position-the-legend-outside-the-plot-area-with-bokeh
@@ -150,7 +136,6 @@ class Bokeh(VisualizeLibInterface):
         p.legend[0] = None
         p.add_layout(new_legend, 'right')
 
-        # legend_manager.draw_legends(p, num_legend_threshold, full_legends)
         return p
 
 
@@ -189,10 +174,10 @@ class Bokeh(VisualizeLibInterface):
         timeseries_records_list = metrics.to_timeseries_records_list(xaxis_type)
 
         # Initialize figure
-        y_labels = timeseries_records_list[0].columns[1]
+        y_axis_label = timeseries_records_list[0].columns[1]
         fig_args = {'frame_height': 270,
                     'frame_width': 800,
-                    'y_labels': y_labels}
+                    'y_axis_label': y_axis_label}
 
         if xaxis_type == 'system_time':
             fig_args['x_axis_label'] = 'system time [s]'
@@ -208,11 +193,11 @@ class Bokeh(VisualizeLibInterface):
             fig_args['active_scroll'] = 'xwheel_zoom'
 
         if isinstance(target_objects[0], CallbackBase):
-            fig_args['title'] = f'Time-line of callbacks {y_labels}'
+            fig_args['title'] = f'Time-line of callbacks {y_axis_label}'
         elif isinstance(target_objects[0], Communication):
-            fig_args['title'] = f'Time-line of communications {y_labels}'
+            fig_args['title'] = f'Time-line of communications {y_axis_label}'
         else:
-            fig_args['title'] = f'Time-line of publishes/subscribes {y_labels}'
+            fig_args['title'] = f'Time-line of publishes/subscribes {y_axis_label}'
 
         p = figure(**fig_args)
 

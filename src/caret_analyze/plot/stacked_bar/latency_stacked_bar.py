@@ -39,7 +39,7 @@ class LatencyStackedBar:
     @staticmethod
     def _get_response_time_record(
         target_object: Path
-    ) -> List[RecordsInterface]:
+    ) -> RecordsInterface:
         response_time = ResponseTime(target_object.to_records(),
                                      columns=target_object.column_names)
         # include timestamp of response time (best, worst)
@@ -47,15 +47,13 @@ class LatencyStackedBar:
 
     @staticmethod
     def _get_rename_column_map(
-        raw_columns: List,
-    ) -> Dict:
+        raw_columns: List[str],
+    ) -> Dict[str, str]:
 
-        rename_map = {}
+        rename_map: Dict[str, str] = {}
         for column in raw_columns:
-            # if '0_min' in column:
             if column.endswith('_min'):
-                rename_map[column] = '/response_time'
-                # new_clumns.append('response time')
+                rename_map[column] = '/'
             elif 'rclcpp_publish' in column:
                 topic_name = column.split('/')[:-2]
                 rename_map[column] = '/'.join(topic_name)
@@ -63,7 +61,6 @@ class LatencyStackedBar:
                 node_name = column.split('/')[:-2]
                 rename_map[column] = '/'.join(node_name)
 
-        # new_clumns.append(raw_columns[-1])
         return rename_map
 
     @staticmethod
@@ -76,54 +73,52 @@ class LatencyStackedBar:
         return records
 
     @staticmethod
-    def _get_start_timestamps(
+    def _get_stacked_bar_dict(
         records: RecordsInterface,
-        first_tracepoint: str,
-    ) -> List:
-        timestamps = []
-        for record in records:
-            timestamps.append(record.data[first_tracepoint])
-        return timestamps
-
-    def to_stacked_bar_records_list(
-        self,
-    ):
-        stacked_bar_records_list: List[RecordsInterface] = []
+        columns: List[str],
+    ) -> Dict[str, List[int]]:
         output_dict = defaultdict(list)
-        # output_dict = {}
-        # object = self._target_objects
-        # response_time = ResponseTime(object.to_records(), columns=object.column_names)
-        # response_records = response_time.to_response_records() # include timestamp of response time (best, worst)
-        response_records = self._get_response_time_record(self._target_objects)
-        # raw_columns = response_records.columns
-        rename_map = self._get_rename_column_map(response_records.columns)
-        response_records = self._rename_columns(response_records, rename_map)
-        columns = list(rename_map.values())
-        # for before, after in column_map.items():
-        #     response_records.rename_columns({before : after})
-        # columns = response_records.columns
-
-
-
-        assert len(columns) >= 2
-        record_size = len(response_records.data)
-        start_timestamps = []
-        output_dict['start timestamp'] = self._get_start_timestamps(response_records, columns[0])
+        record_size = len(records.data)
 
         for column_from, column_to in zip(columns[:-1], columns[1:]):
-            latency = Latency(response_records, column_from, column_to)
-            # stacked_bar_records_list.append(latency.to_records())
+            latency = Latency(records, column_from, column_to)
             assert record_size == len(latency.to_records())
-            for record in latency.to_records():
-                if '/response_time' in column_from:
-                    start_timestamps.append(record.data[columns[0]])
-                output_dict[column_from].append(record.data['latency'])
+            latency_records = latency.to_records()
+            output_dict[column_from] = latency_records.get_column_series('latency')
 
+        return dict(output_dict)
 
-        # output_list['start timestamp'] = list(range(record_size))
-        # return dict(output_dict), columns[:-1]
-        return dict(output_dict), columns[:-1]
+    def to_stacked_bar_records_dict(
+        self,
+    ): # -> Dict[str, List[int]], List[str]
+        output_dict: Dict[str, List[int]] = {}
+        response_records: RecordsInterface = \
+            self._get_response_time_record(self._target_objects)
 
-    def to_dataframe(self):
-        raise NotImplementedError()
+        # rename columns to nodes and topics granularity
+        rename_map: Dict[str, str] = \
+            self._get_rename_column_map(response_records.columns)
+        renamed_records: RecordsInterface = \
+            self._rename_columns(response_records, rename_map)
+        columns = list(rename_map.values())
+        if len(columns) < 2:
+            raise ValueError(f'Column size is {len(columns)} and must be more 2.')
+
+        # add x axis values
+        output_dict['start timestamp'] = renamed_records.get_column_series(columns[0])
+
+        # add stacked bar data
+        output_dict.update(self._get_stacked_bar_dict(renamed_records, columns))
+
+        # return stacked bar data and column_get_stacked_bar_dicts
+        return output_dict, columns[:-1]
+
+    def to_dataframe(self, xaxis_type: str = 'system_time'):
+        stacked_bar_dict, columns = self.to_stacked_bar_records_dict()
+        for column in columns:
+            stacked_bar_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
+        # df = pd.DataFrame(stacked_bar_dict, dtype='Int64')
+        df = pd.DataFrame(stacked_bar_dict)
+        return df
+
 

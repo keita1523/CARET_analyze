@@ -66,4 +66,5 @@ class StackedBarPlot(PlotBase):
         )
 
     def to_dataframe(self, xaxis_type: str = 'system_time') -> pd.DataFrame:
-        return super().to_dataframe(xaxis_type)
+        # return super().to_dataframe(xaxis_type)
+        return self._metrics.to_dataframe(xaxis_type)
