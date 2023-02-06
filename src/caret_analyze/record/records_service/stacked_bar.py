@@ -52,14 +52,14 @@ class StackedBar:
         output_dict.update(self._get_stacked_bar_dict(renamed_records, columns))
 
         self._stacked_bar_dict = output_dict
-        self._columns = columns[:1]
+        self._columns = columns[:-1]
 
-    def get_dict(self) -> RecordsInterface:
-
-
+    @property
+    def get_dict(self) -> Dict[str, List[int]]:
         # return stacked bar data
         return self._stacked_bar_dict
 
+    @property
     def get_columns(self) -> List[str]:
         return self._columns
 

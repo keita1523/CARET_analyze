@@ -169,7 +169,15 @@ class Bokeh(VisualizeLibInterface):
         color = next(color_generator)
         # for label in reversed(y_labels):
         for label in y_labels:
-            p.vbar(x=x_label, top=label, width='x_width_list', source=data, color=color, legend_label=label)
+            p.vbar(
+                x=x_label,
+                top=label,
+                width='x_width_list',
+                source=data,
+                color=color,
+                # bottom=label,
+                legend_label=label
+            )
             color = next(color_generator)
 
 
