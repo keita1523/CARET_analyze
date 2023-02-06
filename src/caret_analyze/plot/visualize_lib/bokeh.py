@@ -45,6 +45,80 @@ class Bokeh(VisualizeLibInterface):
     def __init__(self) -> None:
         pass
 
+    @staticmethod
+    def _figure_settings(ywheel_zoom):
+        fig_args = {'frame_height': 270,
+                    'frame_width': 800}
+        if ywheel_zoom:
+            fig_args['active_scroll'] = 'wheel_zoom'
+        else:
+            fig_args['tools'] = ['xwheel_zoom', 'xpan', 'save', 'reset']
+            fig_args['active_scroll'] = 'xwheel_zoom'
+
+        fig_args['title'] = 'Stacked bar of Response Time.'
+        return fig_args
+
+
+    @staticmethod
+    def _update_data_unit(
+        data: Dict[str, List[int]],
+        unit: float,
+    ) -> Dict[str, List[float]]:
+        for key in data.keys():
+            data[key] = [d * unit for d in data[key]]
+        return data
+
+    @staticmethod
+    def _update_timestamps_to_offset_time(
+        values: List[float]
+    ):
+        new_values: List[float] = []
+        first_time = values[0]
+        for time in values:
+            new_values.append(time - first_time)
+        return new_values
+
+    @staticmethod
+    def _create_stacked_bar_data(
+        data: Dict[str, List[float]],
+        y_labels: List[str],
+    ) -> Dict[str, List[float]]:
+        for prev_, next_ in zip(reversed(y_labels[:-1]), reversed(y_labels[1:])):
+            data[prev_] = [data[prev_][i] + data[next_][i] for i in range(len(data[next_]))]
+        return data
+
+    @staticmethod
+    def _get_x_width_list(x_values: List[float]) -> List[float]:
+        x_width_list: List[float] = [(x_values[i+1]-x_values[i]) * 0.99 for i in range(len(x_values)-1)]
+        x_width_list.append(x_width_list[-1])
+        return x_width_list
+
+    @staticmethod
+    def _side_shift(
+        values: List[float],
+        shift_values: List[float]
+    ) -> List[float]:
+        return [values[i] + shift_values[i] for i in range(len(values))]
+
+
+    def _get_visualizable_data(
+        self,
+        data: Dict[str, List[int]],
+        y_labels: List[str],
+        x_key: str,
+    ): # -> Dict[str, List[float]], List[str], List[str]
+        output_data: Dict[str, List[float]] = {}
+
+        output_data = self._update_data_unit(data, 1e-9)
+        output_data = self._create_stacked_bar_data(output_data, y_labels)
+        output_data[x_key] = self._update_timestamps_to_offset_time(output_data[x_key])
+
+        x_width_list = self._get_x_width_list(output_data[x_key])
+        harf_width_list = [x / 2 for x in x_width_list]
+        output_data[x_key] = self._side_shift(output_data[x_key], harf_width_list)
+
+        return output_data, x_width_list
+
     def stacked_bar(
         self,
         metrics,
@@ -55,19 +129,20 @@ class Bokeh(VisualizeLibInterface):
 
         # NOTE: relation betwenn stacked bar graph and data struct
         # # data = {
-        # #     'tracepoint_a': [a1, a2, a3],
-        # #     'tracepoint_b': [b1, b2, b3],
+        # #     a : [a1, a2, a3],
+        # #     b : [b1, b2, b3],
         # #     'start timestamp': [s1, s2, s3]
         # # }
+        # # y_labels = {a, b}
 
         # # ^               ^
         # # |               |       ^       [] a
         # # |       ^       |       |       [] b
-        # # |       |       b2      |
-        # # |       b1      ^       b3
+        # # |       |       a2      |
+        # # |       a1      ^       a3
         # # |       ^       |       ^
         # # |       |       |       |
-        # # |       a1      a2      a3
+        # # |       b1      b2      b3
         # # +-------s1------s2------s3---------->
 
         def get_color_generator() -> Generator:
@@ -77,56 +152,24 @@ class Bokeh(VisualizeLibInterface):
                 yield color_palette[color_idx]
                 color_idx = (color_idx + 1) % len(color_palette)
 
-        fig_args = {'frame_height': 270,
-                    'frame_width': 800}
-        if ywheel_zoom:
-            fig_args['active_scroll'] = 'wheel_zoom'
-        else:
-            fig_args['tools'] = ['xwheel_zoom', 'xpan', 'save', 'reset']
-            fig_args['active_scroll'] = 'xwheel_zoom'
-
-        fig_args['title'] = 'Stacked bar of Response Time.'
-
-        data, y_labels = metrics.to_stacked_bar_records_dict()
-
-
-        # data * 1e-9
-        for key in data.keys():
-            data[key] = [timestamp * 1e-9 for timestamp in data[key]]
-
-        # change each latency data into stacked data
-        for prev_, next_ in zip(y_labels[:-1], y_labels[1:]):
-            data[next_] = [data[next_][i] + data[prev_][i] for i in range(len(data[prev_]))]
-
-        # change x label into the offset time from first time
-        x_key: str = 'start timestamp'
-        x_values = data[x_key]
-        new_x_values = []
-        first_time = x_values[0]
-        for time in x_values:
-            new_x_values.append(time - first_time)
-        data[x_key] = new_x_values
-        x_values = data[x_key]
-
-        # set left bottom of bar on the start time
-        x_distance_list = [(x_values[i+1]-x_values[i]) * 0.99 for i in range(len(x_values)-1)]
-        x_distance_list.append(x_distance_list[-1])
-        x_values = [x_values[i] + x_distance_list[i] / 2 for i in range(len(x_values))]
-        data[x_key] = x_values
-
-
-
-
+        fig_args = self._figure_settings(ywheel_zoom)
         p = figure(**fig_args)
 
+        # get stacked bar data
+        data, y_labels = metrics.to_stacked_bar_records_dict()
+
+        # data conversion to visualize data as stacked bar graph
+        x_label: str = 'start timestamp'
+        data, x_width_list = self._get_visualizable_data(data, y_labels, x_label)
 
         color_generator = get_color_generator()
         data = ColumnDataSource(data)
         data.add(y_labels, 'legend')
-        data.add(x_distance_list, 'x_distance_list')
+        data.add(x_width_list, 'x_width_list')
         color = next(color_generator)
-        for label in reversed(y_labels):
-            p.vbar(x=x_key, top=label, width='x_distance_list', source=data, color=color, legend_label=label)
+        # for label in reversed(y_labels):
+        for label in y_labels:
+            p.vbar(x=x_label, top=label, width='x_width_list', source=data, color=color, legend_label=label)
             color = next(color_generator)
 
 
