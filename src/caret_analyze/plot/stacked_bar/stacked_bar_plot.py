@@ -24,10 +24,7 @@ from ..visualize_lib import VisualizeLibInterface
 from ...exceptions import UnsupportedTypeError
 from ...runtime import CallbackBase, Communication, Publisher, Subscription, Path
 
-from caret_analyze.runtime.path import Path
-from caret_analyze.record.record_factory import RecordsFactory
-from caret_analyze.record.column import ColumnValue
-from caret_analyze.record import ResponseTime
+# from caret_analyze.runtime.path import Path
 from .latency_stacked_bar import LatencyStackedBar
 
 StackedBarTypes = Union[Path]
