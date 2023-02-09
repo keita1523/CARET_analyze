@@ -51,25 +51,8 @@ class LatencyStackedBar:
     ): # -> Dict[str, List[int]], List[str]
         response_records: RecordsInterface = \
             self._get_response_time_record(self._target_objects)
-
-        # # rename columns to nodes and topics granularity
-        # rename_map: Dict[str, str] = \
-        #     self._get_rename_column_map(response_records.columns)
-        # renamed_records: RecordsInterface = \
-        #     self._rename_columns(response_records, rename_map)
-        # columns = list(rename_map.values())
-        # if len(columns) < 2:
-        #     raise ValueError(f'Column size is {len(columns)} and must be more 2.')
-
-        # # add x axis values
-        # output_dict['start timestamp'] = renamed_records.get_column_series(columns[0])
-
-        # # add stacked bar data
-        # output_dict.update(self._get_stacked_bar_dict(renamed_records, columns))
-
-        # # return stacked bar data and column_get_stacked_bar_dicts
         stacked_bar = StackedBar(response_records)
-        return stacked_bar.get_dict, stacked_bar.get_columns
+        return stacked_bar.get_stacked_dict, stacked_bar.get_columns
 
     def to_dataframe(self, xaxis_type: str = 'system_time'):
         stacked_bar_dict, columns = self.to_stacked_bar_records_dict()

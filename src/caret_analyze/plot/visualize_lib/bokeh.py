@@ -159,7 +159,7 @@ class Bokeh(VisualizeLibInterface):
         data, y_labels = metrics.to_stacked_bar_records_dict()
 
         # data conversion to visualize data as stacked bar graph
-        x_label: str = 'start timestamp'
+        x_label: str = 'start time'
         data, x_width_list = self._get_visualizable_data(data, y_labels, x_label)
 
         color_generator = get_color_generator()
@@ -176,8 +176,29 @@ class Bokeh(VisualizeLibInterface):
                 source=data,
                 color=color,
                 # bottom=label,
-                legend_label=label
+                legend_label=label,
             )
+
+        # for i in range(len(y_labels)):
+        #     if i == 0:
+        #         p.vbar(
+        #             x=x_label,
+        #             top=y_labels[i],
+        #             width='x_width_list',
+        #             source=data,
+        #             color=color,
+        #             legend_label=y_labels[i],
+        #         )
+        #     else:
+        #         p.vbar(
+        #             x=x_label,
+        #             top=y_labels[i],
+        #             width='x_width_list',
+        #             source=data,
+        #             color=color,
+        #             bottom=y_labels[i-1],
+        #             legend_label=y_labels[i],
+        #         )
             color = next(color_generator)
 
 
