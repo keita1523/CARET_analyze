@@ -18,7 +18,7 @@ import pandas as pd
 
 from ..metrics_base import MetricsBase
 from ...record import RecordsInterface, StackedBar
-from ...runtime import CallbackBase, Communication, Path
+from ...runtime import Path
 
 from caret_analyze.record import ResponseTime
 from collections import defaultdict

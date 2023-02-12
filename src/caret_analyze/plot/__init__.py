@@ -19,6 +19,7 @@ from .graphviz.node_graph import node_graph
 from .message_flow import message_flow
 from .plot_base import PlotBase
 from .plot_facade import Plot
+from .stacked_bar import LatencyStackedBar
 
 __all__ = [
     'Plot',
@@ -27,5 +28,6 @@ __all__ = [
     'callback_sched',
     'chain_latency',
     'node_graph',
-    'message_flow'
+    'message_flow',
+    'LatencyStackedBar',
 ]

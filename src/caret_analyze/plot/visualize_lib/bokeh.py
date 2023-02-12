@@ -29,10 +29,11 @@ import numpy as np
 from .visualize_lib_interface import VisualizeLibInterface
 from ..metrics_base import MetricsBase
 from ...record import RecordsInterface
-from ...runtime import (CallbackBase, Communication, Publisher,
+from ...runtime import (CallbackBase, Communication, Path, Publisher,
                         Subscription, SubscriptionCallback, TimerCallback)
 
 # from caret_analyze.plot.stacked_bar.latency_stacked_bar import LatencyStackedBar
+# from ..stacked_bar.latency_stacked_bar import LatencyStackedBar
 
 TimeSeriesTypes = Union[CallbackBase, Communication, Union[Publisher, Subscription]]
 
@@ -46,17 +47,30 @@ class Bokeh(VisualizeLibInterface):
         pass
 
     @staticmethod
-    def _figure_settings(ywheel_zoom):
-        fig_args = {'frame_height': 270,
-                    'frame_width': 800}
+    def _figure_settings(
+        xaxis_type: str,
+        ywheel_zoom: bool,
+    ):
+        fig_args: Dict[str, Union[int, str, List[str]]] = \
+            {'frame_height': 270, 'frame_width': 800}
         if ywheel_zoom:
             fig_args['active_scroll'] = 'wheel_zoom'
         else:
             fig_args['tools'] = ['xwheel_zoom', 'xpan', 'save', 'reset']
             fig_args['active_scroll'] = 'xwheel_zoom'
 
+        if xaxis_type == 'system_time':
+            fig_args['x_axis_label'] = 'system time [s]'
+            x_label: str = 'start time'
+        elif xaxis_type == 'sim_time':
+            fig_args['x_axis_label'] = 'simulation time [s]'
+            x_label: str = 'start time'
+        else: # index
+            fig_args['x_axis_label'] = xaxis_type
+            x_label: str = 'index'
+
         fig_args['title'] = 'Stacked bar of Response Time.'
-        return fig_args
+        return fig_args, x_label
 
 
     @staticmethod
@@ -70,20 +84,20 @@ class Bokeh(VisualizeLibInterface):
 
     @staticmethod
     def _update_timestamps_to_offset_time(
-        values: List[float]
+        x_values: List[float]
     ):
         new_values: List[float] = []
-        first_time = values[0]
-        for time in values:
+        first_time = x_values[0]
+        for time in x_values:
             new_values.append(time - first_time)
         return new_values
 
     @staticmethod
-    def _create_stacked_bar_data(
+    def _stacked_y_values(
         data: Dict[str, List[float]],
-        y_labels: List[str],
+        y_values: List[str],
     ) -> Dict[str, List[float]]:
-        for prev_, next_ in zip(reversed(y_labels[:-1]), reversed(y_labels[1:])):
+        for prev_, next_ in zip(reversed(y_values[:-1]), reversed(y_values[1:])):
             data[prev_] = [data[prev_][i] + data[next_][i] for i in range(len(data[next_]))]
         return data
 
@@ -105,19 +119,102 @@ class Bokeh(VisualizeLibInterface):
         self,
         data: Dict[str, List[int]],
         y_labels: List[str],
-        x_key: str,
-    ): # -> Dict[str, List[float]], List[str], List[str]
+        x_label: str,
+    ): # -> Dict[str, List[float]], List[str], List[float]
         output_data: Dict[str, List[float]] = {}
+        x_width_list: List[float] = []
 
         output_data = self._update_data_unit(data, 1e-9)
-        output_data = self._create_stacked_bar_data(output_data, y_labels)
-        output_data[x_key] = self._update_timestamps_to_offset_time(output_data[x_key])
+        output_data = self._stacked_y_values(output_data, y_labels)
 
-        x_width_list = self._get_x_width_list(output_data[x_key])
-        harf_width_list = [x / 2 for x in x_width_list]
-        output_data[x_key] = self._side_shift(output_data[x_key], harf_width_list)
+        if x_label == 'system_time':
+            output_data[x_label] = self._update_timestamps_to_offset_time(output_data[x_label])
+            x_width_list = self._get_x_width_list(output_data[x_label])
+            harf_width_list = [x / 2 for x in x_width_list]
+            output_data[x_label] = self._side_shift(output_data[x_label], harf_width_list)
+        elif x_label == 'sim_time':
+            NotImplementedError()
+        else: # index
+            output_data[x_label] = [i for i in range(len(output_data[y_labels[0]]))]
+            x_width_list = self._get_x_width_list(output_data[x_label])
 
         return output_data, x_width_list
+
+    @staticmethod
+    def _create_source(
+        data: Dict[str, list[float]],
+        y_labels: List[str],
+        x_width_list: List[float],
+    ): # -> ColumnDataSource, List[str]
+        source = ColumnDataSource(data)
+        source.add(y_labels, 'legend')
+        source.add(x_width_list, 'x_width_list')
+        prev_y_labels: List[str] = []
+        for y_label in y_labels[1:]:
+            bottom_label = y_label + '_bottom'
+            prev_y_labels.append(bottom_label)
+            source.add(data[y_label], bottom_label)
+        return source, prev_y_labels
+
+    @staticmethod
+    def _update_legend_setting(p):
+        # Processing to move legends out of graph area
+        # https://stackoverflow.com/questions/46730609/position-the-legend-outside-the-plot-area-with-bokeh
+        new_legend = p.legend[0]
+        p.legend[0] = None
+        p.add_layout(new_legend, 'right')
+
+        #
+        p.legend.click_policy='mute' # or 'hide
+        return p
+
+    def _create_bar_plot(
+        self,
+        fig_args: Dict[str, Union[int, str, List[str]]],
+        source: ColumnDataSource,
+        x_label: str,
+        y_labels: List[str],
+        prev_y_labels: list[str],
+        full_legends: bool,
+    ):
+        def get_color_generator() -> Generator:
+            color_palette = self._create_color_palette()
+            color_idx = 0
+            while True:
+                yield color_palette[color_idx]
+                color_idx = (color_idx + 1) % len(color_palette)
+
+        p = figure(**fig_args)
+        color_generator = get_color_generator()
+        color: Sequence[Color] = next(color_generator)
+
+        legend_manager = LegendManager()
+        for y_label, bottom in zip(y_labels[:-1], prev_y_labels):
+            renderer = p.vbar(
+                x=x_label,
+                top=y_label,
+                width='x_width_list',
+                source=source,
+                color=color,
+                bottom=bottom,
+                legend_label=y_label,
+            )
+            color = next(color_generator)
+            legend_manager.add_legend(y_label, renderer)
+
+        renderer = p.vbar(
+            x=x_label,
+            top=y_labels[-1],
+            width='x_width_list',
+            source=source,
+            color=color,
+            legend_label=y_labels[-1],
+        )
+        legend_manager.add_legend(y_labels[-1], renderer)
+        num_legend_threshold = 20
+        legend_manager.draw_legends(p, num_legend_threshold, full_legends)
+
+        return p
 
     def stacked_bar(
         self,
@@ -131,9 +228,9 @@ class Bokeh(VisualizeLibInterface):
         # # data = {
         # #     a : [a1, a2, a3],
         # #     b : [b1, b2, b3],
-        # #     'start timestamp': [s1, s2, s3]
+        # #     'start time': [s1, s2, s3]
         # # }
-        # # y_labels = {a, b}
+        # # y_labels = [a, b]
 
         # # ^               ^
         # # |               |       ^       [] a
@@ -145,68 +242,32 @@ class Bokeh(VisualizeLibInterface):
         # # |       b1      b2      b3
         # # +-------s1------s2------s3---------->
 
-        def get_color_generator() -> Generator:
-            color_palette = self._create_color_palette()
-            color_idx = 0
-            while True:
-                yield color_palette[color_idx]
-                color_idx = (color_idx + 1) % len(color_palette)
 
-        fig_args = self._figure_settings(ywheel_zoom)
-        p = figure(**fig_args)
 
         # get stacked bar data
+        data: Dict[str, list[int]] = {}
+        y_labels: List[str] = []
+        fig_args: Dict[str, Union[int, str, List[str]]] = {}
+        fig_args, x_label = self._figure_settings(xaxis_type, ywheel_zoom)
+
+
         data, y_labels = metrics.to_stacked_bar_records_dict()
 
         # data conversion to visualize data as stacked bar graph
-        x_label: str = 'start time'
-        data, x_width_list = self._get_visualizable_data(data, y_labels, x_label)
+        stacked_bar_data, x_width_list = self._get_visualizable_data(data, y_labels, x_label)
+        source, prev_y_labels = self._create_source(stacked_bar_data, y_labels, x_width_list)
 
-        color_generator = get_color_generator()
-        data = ColumnDataSource(data)
-        data.add(y_labels, 'legend')
-        data.add(x_width_list, 'x_width_list')
-        color = next(color_generator)
-        # for label in reversed(y_labels):
-        for label in y_labels:
-            p.vbar(
-                x=x_label,
-                top=label,
-                width='x_width_list',
-                source=data,
-                color=color,
-                # bottom=label,
-                legend_label=label,
-            )
-
-        # for i in range(len(y_labels)):
-        #     if i == 0:
-        #         p.vbar(
-        #             x=x_label,
-        #             top=y_labels[i],
-        #             width='x_width_list',
-        #             source=data,
-        #             color=color,
-        #             legend_label=y_labels[i],
-        #         )
-        #     else:
-        #         p.vbar(
-        #             x=x_label,
-        #             top=y_labels[i],
-        #             width='x_width_list',
-        #             source=data,
-        #             color=color,
-        #             bottom=y_labels[i-1],
-        #             legend_label=y_labels[i],
-        #         )
-            color = next(color_generator)
+        p = self._create_bar_plot(
+            fig_args,
+            source,
+            x_label,
+            y_labels,
+            prev_y_labels,
+            full_legends,
+        )
+        p = self._update_legend_setting(p)
 
 
-        # Processing to move legends out of graph area
-        # https://stackoverflow.com/questions/46730609/position-the-legend-outside-the-plot-area-with-bokeh
-        new_legend = p.legend[0]
-        p.legend[0] = None
-        p.add_layout(new_legend, 'right')
 
         return p
 
@@ -608,3 +669,5 @@ class LegendManager:
         self._legend[target_object] = label
 
         return label
+
+# class BarSource
