@@ -115,7 +115,7 @@ class Bokeh(VisualizeLibInterface):
         return [values[i] + shift_values[i] for i in range(len(values))]
 
 
-    def _get_visualizable_data(
+    def _get_stacked_bar_data(
         self,
         data: Dict[str, List[int]],
         y_labels: List[str],
@@ -124,13 +124,20 @@ class Bokeh(VisualizeLibInterface):
         output_data: Dict[str, List[float]] = {}
         x_width_list: List[float] = []
 
+        # Convert the data unit to second
         output_data = self._update_data_unit(data, 1e-9)
+
+        # Calculate the stacked y values
         output_data = self._stacked_y_values(output_data, y_labels)
 
         if x_label == 'system_time':
+            # Update the timestamps from absolutely time to offset time
             output_data[x_label] = self._update_timestamps_to_offset_time(output_data[x_label])
+
             x_width_list = self._get_x_width_list(output_data[x_label])
             harf_width_list = [x / 2 for x in x_width_list]
+
+            # Slide x axis values so that the bottom left of bars are the start time.
             output_data[x_label] = self._side_shift(output_data[x_label], harf_width_list)
         elif x_label == 'sim_time':
             NotImplementedError()
@@ -164,8 +171,8 @@ class Bokeh(VisualizeLibInterface):
         p.legend[0] = None
         p.add_layout(new_legend, 'right')
 
-        #
-        p.legend.click_policy='mute' # or 'hide
+        # click policy. 'mute' makes the graph translucent.
+        p.legend.click_policy='mute' # or 'hide'
         return p
 
     def _create_bar_plot(
@@ -221,7 +228,7 @@ class Bokeh(VisualizeLibInterface):
         metrics,
         xaxis_type: str,
         ywheel_zoom: bool,
-        full_legends: bool,
+        full_legends: bool, # NOTE: unused because LegendManager not apply stacked bar.
     ):
 
         # NOTE: relation betwenn stacked bar graph and data struct
@@ -254,7 +261,7 @@ class Bokeh(VisualizeLibInterface):
         data, y_labels = metrics.to_stacked_bar_records_dict()
 
         # data conversion to visualize data as stacked bar graph
-        stacked_bar_data, x_width_list = self._get_visualizable_data(data, y_labels, x_label)
+        stacked_bar_data, x_width_list = self._get_stacked_bar_data(data, y_labels, x_label)
         source, prev_y_labels = self._create_source(stacked_bar_data, y_labels, x_width_list)
 
         p = self._create_bar_plot(
@@ -437,7 +444,6 @@ class Bokeh(VisualizeLibInterface):
         fig.xgrid.minor_grid_line_alpha = 0.1
 
         fig.xaxis.major_label_overrides = {0: f'0+{offset_s}'}
-
 
 class LineSource:
     """Class that generate lines of timeseries data."""
@@ -669,5 +675,3 @@ class LegendManager:
         self._legend[target_object] = label
 
         return label
-
-# class BarSource
