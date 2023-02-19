@@ -12,30 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# from ..column import ColumnValue
 from ..interface import RecordsInterface
 from ..record_factory import RecordsFactory
-from ..record import Columns, ColumnValue
-from ..record_factory import RecordFactory
+from ..record import ColumnValue
 from .latency import Latency
 
 
-from typing import Dict, List, Sequence, Tuple, Union
-
-import pandas as pd
-
-# from ...record import Latency, RecordsInterface
-# from ...runtime import CallbackBase, Communication, Path
-
-# from caret_analyze.record import ResponseTime
-from collections import defaultdict
+from typing import Dict, List
 
 class StackedBar:
     def __init__(
         self,
         records: RecordsInterface,
-) -> None:
+    ) -> None:
+        """
+        Generate records for stacked bar.
+
+        Parameters
+        ----------
+        records : RecordsInterface
+            Records of response time.
+
+        Raises
+        ------
+        ValueError
+            Error occurs if the records are empty.
+        """
+
         # rename columns to nodes and topics granularity
         self._records = records
         self._diff_response_time_name = '[worst - best] response time'
@@ -46,10 +49,6 @@ class StackedBar:
         columns = list(rename_map.values())
         if len(columns) < 2:
             raise ValueError(f'Column size is {len(columns)} and must be more 2.')
-
-        # output_dict: Dict[str, List[int]] = {}
-        # # add x axis values
-        # output_dict['start timestamp'] = renamed_records.get_column_series(columns[0])
 
         # add stacked bar data
         xlabel: str = 'start time'
@@ -62,93 +61,50 @@ class StackedBar:
                 xlabel,
             )
         self._stacked_bar_records = stacked_bar_records
-        # self._stacked_bar_dict = self._to_dict(stacked_bar_records)
         self._columns = columns[:-1]
 
-    def _get_x_axis_values(
-        self,
-        records: RecordsInterface,
-        column: str,
-        xlabel: str,
-    ) -> RecordsInterface:
-        # data = {column : records.get_column_series(column)}
-        # label = 'start time'
-
-        # record: RecordsInterface = \
-        #     RecordsFactory.create_instance([], [ColumnValue(column)])
-        series = records.get_column_series(column)
-        record_dict = [{xlabel : _ } for _ in series]
-        record = RecordsFactory.create_instance(record_dict, [ColumnValue(xlabel)])
-        # records = self._append_column_series(records, records.get_column_series(column), column)
-
-        return record
-
-    def to_dict(self) -> Dict[str, List[int]]:
-        return self._to_dict(self._stacked_bar_records)
-
-    @property
-    def columns(self) -> List[str]:
-        return self._columns
-
-    @property
-    def records(self) -> RecordsInterface:
-        return self._stacked_bar_records
-
     @staticmethod
-    def _append_column_series(
+    def _rename_columns(
         records: RecordsInterface,
-        series: List[int],
-        column: str,
+        rename_map: Dict[str, str],
     ) -> RecordsInterface:
+        """
+        Rename columns of records.
 
-        record_dict = [{column : t} for t in series]
+        Parameters
+        ----------
+        records : RecordsInterface
+            Target records.
+        rename_map : Dict[str, str]
+            Names before and after changed.
 
-        if len(records.data) == 0:
-            new_records: RecordsInterface = \
-                RecordsFactory.create_instance(record_dict, [ColumnValue(column)])
-            records.concat(new_records)
-        else:
-            records.append_column(ColumnValue(column), series)
+        Returns
+        -------
+        RecordsInterface
+            Renamed records
+        """
+
+        for before, after in rename_map.items():
+            records.rename_columns({before : after})
         return records
-        # return new_records
 
-    @staticmethod
-    def _to_dict(records: RecordsInterface) -> Dict[str, List[int]]:
-        columns = records.columns
-        output_dict: Dict[str, List[int]] = {}
-        for column in columns:
-            output_dict[column] = records.get_column_series(column)
-        return output_dict
-
-
-
-    def _to_stacked_bar_records(
-        self,
-        records: RecordsInterface,
-        columns: List[str],
-    ) -> RecordsInterface:
-        output_records: RecordsInterface = RecordsFactory.create_instance()
-        record_size = len(records.data)
-        for column in columns[:-1]:
-            output_records.append_column(ColumnValue(column), [])
-
-        for column_from, column_to in zip(columns[:-1], columns[1:]):
-            latency_handler = Latency(records, column_from, column_to)
-            assert record_size == len(latency_handler.to_records())
-
-            latency_records = latency_handler.to_records()
-            latency = latency_records.get_column_series('latency')
-
-            output_records = self._append_column_series(output_records, list(latency), column_from)
-
-        return output_records
-
-
-    # @staticmethod
     def _get_rename_column_map(
         self,
         raw_columns: List[str],
     ) -> Dict[str, str]:
+        """
+        Generate rename map to visualize Node/Topic granularity.
+
+        Parameters
+        ----------
+        raw_columns : List[str]
+            Source columns.
+
+        Returns
+        -------
+        Dict[str, str]
+            Names before and after changed.
+        """
 
         rename_map: Dict[str, str] = {}
         end_word: str = '_min'
@@ -165,34 +121,144 @@ class StackedBar:
         return rename_map
 
     @staticmethod
-    def _rename_columns(
+    def _get_x_axis_values(
         records: RecordsInterface,
-        rename_map: Dict[str, str],
-    ):
-        for before, after in rename_map.items():
-            records.rename_columns({before : after})
-        return records
+        column: str,
+        xlabel: str,
+    ) -> RecordsInterface:
+        """
+        Get x axis values.
 
-    @staticmethod
-    def _get_stacked_bar_dict(
+        Parameters
+        ----------
+        records : RecordsInterface
+            Target records.
+        column : str
+            Target column.
+        xlabel : str
+            Label name.
+
+        Returns
+        -------
+        RecordsInterface
+            Target column's records.
+        """
+
+        series = records.get_column_series(column)
+        record_dict = [{xlabel : _ } for _ in series]
+        record: RecordsInterface = RecordsFactory.create_instance(record_dict, [ColumnValue(xlabel)])
+        return record
+
+    def _to_stacked_bar_records(
+        self,
         records: RecordsInterface,
         columns: List[str],
-    ) -> Dict[str, List[int]]:
-        output_dict = defaultdict(list)
+    ) -> RecordsInterface:
+        """
+        Caluculate stacked bar data.
+
+        Parameters
+        ----------
+        records : RecordsInterface
+            Target records.
+        columns : List[str]
+            Target columns (Node/Topic granularity).
+
+        Returns
+        -------
+        RecordsInterface
+            Stacked bar records.
+        """
+
+        output_records: RecordsInterface = RecordsFactory.create_instance()
         record_size = len(records.data)
-        # column_value = Columns(columns)
-        output_records: RecordsInterface = RecordsFactory.create_instance([],[])
-        # output_records.append_column(columns[:-1], [])
+        for column in columns[:-1]:
+            output_records.append_column(ColumnValue(column), [])
 
         for column_from, column_to in zip(columns[:-1], columns[1:]):
-            latency = Latency(records, column_from, column_to)
-            assert record_size == len(latency.to_records())
-            latency_records = latency.to_records()
-            # RecordFactory.create_instance()
-            a = latency_records.get_column_series('latency')
-            output_records.append_column(ColumnValue(column_from), [])
-            output_dict[column_from] = latency_records.get_column_series('latency')
-            # output_records.data[column_from] = latency_records.get_column_series('latency')
-            output_records.append(ColumnValue(column_from), latency_records.get_column_series('latency'))
-            # output_records.concat(latency_records.get_column_series('latency'))
-        return dict(output_dict)
+            latency_handler = Latency(records, column_from, column_to)
+            assert record_size == len(latency_handler.to_records())
+
+            latency_records = latency_handler.to_records()
+            latency = latency_records.get_column_series('latency')
+
+            output_records = self._append_column_series(output_records, list(latency), column_from)
+
+        return output_records
+
+    @staticmethod
+    def _append_column_series(
+        records: RecordsInterface,
+        series: List[int],
+        column: str,
+    ) -> RecordsInterface:
+        """
+        Append series to records.
+
+        Parameters
+        ----------
+        records : RecordsInterface
+            Source records.
+        series : List[int]
+            Data to append.
+        column : str
+            The column with appneded data.
+
+        Returns
+        -------
+        RecordsInterface
+            Appended records.
+        """
+
+        record_dict = [{column : t} for t in series]
+
+        if len(records.data) == 0:
+            new_records: RecordsInterface = \
+                RecordsFactory.create_instance(record_dict, [ColumnValue(column)])
+            records.concat(new_records)
+        else:
+            records.append_column(ColumnValue(column), series)
+        return records
+
+    def to_dict(self) -> Dict[str, List[int]]:
+        """
+        Get stacked bar dict data.
+
+        Returns
+        -------
+        Dict[str, List[int]]
+            Stacked bar dict data.
+        """
+
+        return self._to_dict(self._stacked_bar_records)
+
+    @staticmethod
+    def _to_dict(records: RecordsInterface) -> Dict[str, List[int]]:
+        """
+        Generate dict from records.
+
+        Parameters
+        ----------
+        records : RecordsInterface
+            Target records.
+
+        Returns
+        -------
+        Dict[str, List[int]]
+            Dict generated from records.
+
+        """
+        columns = records.columns
+        output_dict: Dict[str, List[int]] = {}
+        for column in columns:
+            output_dict[column] = records.get_column_series(column)
+        return output_dict
+
+    @property
+    def columns(self) -> List[str]:
+        return self._columns
+
+    @property
+    def records(self) -> RecordsInterface:
+        return self._stacked_bar_records
+

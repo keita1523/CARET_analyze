@@ -12,54 +12,86 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Sequence, Tuple, Union
-
 import pandas as pd
 
-from ..metrics_base import MetricsBase
-# from ...record import RecordsInterface
-from ...record import RecordsInterface, StackedBar
+from ...record import RecordsInterface, ResponseTime, StackedBar
 from ...runtime import Path
 
-from caret_analyze.record import ResponseTime
-from collections import defaultdict
-
-
 class LatencyStackedBar:
+    """Class that provides latency stacked bar data."""
+
     def __init__(
         self,
         target_objects: Path,
     ) -> None:
         self._target_objects = target_objects
 
-
-    @property
-    def target_objects(self) -> Path:
-        return self._target_objects
-
-
-    @staticmethod
-    def _get_response_time_record(
-        target_object: Path
-    ) -> RecordsInterface:
-        response_time = ResponseTime(target_object.to_records(),
-                                     columns=target_object.column_names)
-        # include timestamp of response time (best, worst)
-        return response_time.to_response_records()
-
-    def to_stacked_bar_records_dict(
+    def to_dataframe(
         self,
-    ): # -> Dict[str, List[int]], List[str]
-        response_records: RecordsInterface = \
-            self._get_response_time_record(self._target_objects)
-        stacked_bar = StackedBar(response_records)
-        return stacked_bar.to_dict(), stacked_bar.columns
+        xaxis_type: str = 'system_time'
+    ) -> pd.DataFrame:
+        """
+        Get latency stacked bar data in pandas DataFrame format.
 
-    def to_dataframe(self, xaxis_type: str = 'system_time'): # not apply other type
-        stacked_bar_dict, columns = self.to_stacked_bar_records_dict()
+        Parameters
+        ----------
+        xaxis_type : str, optional
+            X axis value's type , by default 'system_time'.
+            # TODO: apply xaxis_type, now only support system time.
+
+        Returns
+        -------
+        pd.DataFrame
+            Latency dataframe.
+        """
+
+        # TODO: apply xaxis_type
+        stacked_bar_dict, columns = self.to_stacked_bar_dict()
         for column in columns:
             stacked_bar_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
         df = pd.DataFrame(stacked_bar_dict)
         return df
 
+    def to_stacked_bar_dict(
+        self,
+    ): # -> Dict[str, List[int]], List[str]
+        """
+        Get stacked bar dict and columns
 
+        Returns
+        -------
+        Dict[str, List[int]], List[str]
+            Stacked bar dict.
+            Columns (not include 'start time').
+        """
+        response_records: RecordsInterface = \
+            self._get_response_time_record(self._target_objects)
+        stacked_bar = StackedBar(response_records)
+        return stacked_bar.to_dict(), stacked_bar.columns
+
+    @staticmethod
+    def _get_response_time_record(
+        target_object: Path
+    ) -> RecordsInterface:
+        """
+        Get response time records.
+
+        Parameters
+        ----------
+        target_object : Path
+            Target path object.
+
+        Returns
+        -------
+        RecordsInterface
+            Response time records of the path.
+        """
+
+        response_time = ResponseTime(target_object.to_records(),
+                                     columns=target_object.column_names)
+        # include timestamp of response time (best, worst)
+        return response_time.to_response_records()
+
+    @property
+    def target_objects(self) -> Path:
+        return self._target_objects

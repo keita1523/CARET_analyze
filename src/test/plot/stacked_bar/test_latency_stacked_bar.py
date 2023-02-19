@@ -119,7 +119,7 @@ class TestLatencyStackedBar:
         columns = []
         stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
         with pytest.raises(ValueError):
-            stacked_bar_plot.to_stacked_bar_records_dict()
+            stacked_bar_plot.to_stacked_bar_dict()
 
 
     def test_default_case(self, create_mock):
@@ -128,7 +128,7 @@ class TestLatencyStackedBar:
         stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
 
         # create stacked bar data
-        output_dict, output_columns = stacked_bar_plot.to_stacked_bar_records_dict()
+        output_dict, output_columns = stacked_bar_plot.to_stacked_bar_dict()
 
         assert output_dict == expect_dict
         assert output_columns == expect_columns
