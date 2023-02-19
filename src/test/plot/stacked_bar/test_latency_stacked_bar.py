@@ -12,17 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from caret_analyze import Architecture, Lttng, Application
-from caret_analyze.value_objects import PathStructValue
-from caret_analyze.runtime import NodePath, Path
-from caret_analyze.runtime.path import ColumnMerger, RecordsMerged
-# from caret_analyze.plot.stacked_bar import StackedBarPlot
+from caret_analyze.runtime import Path
 from caret_analyze.plot.stacked_bar import LatencyStackedBar
-from caret_analyze.record import ResponseTime, ColumnValue
-from caret_analyze.record import RecordsFactory, RecordsInterface
-# from caret_analyze.record.record_cpp_impl import RecordsCppImpl
+from caret_analyze.record import ColumnValue, RecordsFactory
 
-# from collections import defaultdict, UserList
 import pytest
 import pandas as pd
 
@@ -36,7 +29,6 @@ def create_mock(mocker):
         for column in columns:
             column_map[column] = column + '_renamed'
         mocker.patch.object(stacked_bar_plot, '_get_response_time_record', return_value=records)
-        # mocker.patch.object(stacked_bar_plot, '_get_rename_column_map', return_value=column_map)
         return stacked_bar_plot
     return _create_mock
 
@@ -87,33 +79,6 @@ def get_data_set():
 
 class TestLatencyStackedBar:
 
-    def test_flow(self):
-
-        arch_file = "/home/emb4/tmp_tracedata/stacked_bar/arch_stacked_bar.yaml"
-        # trace_data = "test03_main"
-        trace_data = "/home/emb4/tmp_tracedata/test09"
-        target_path1 = "target_path1"
-        target_path2 = "target_path2"
-        answer_path = "answer_path"
-
-        arch = Architecture('yaml', arch_file)
-        lttng = Lttng(trace_data)
-        app = Application(arch, lttng)
-
-        path1= arch.get_path(target_path1)
-        path2 = arch.get_path(target_path2)
-        answer = arch.get_path(answer_path)
-
-        from caret_analyze.plot import Plot
-
-        path1= arch.get_path(target_path1)
-        path = app.get_path(target_path1)
-        print(type(path))
-
-        plot = Plot.create_response_time_stacked_bar_plot(path)
-        plot.figure()
-
-
     def test_empty_case(self, create_mock):
         data = []
         columns = []
@@ -135,12 +100,12 @@ class TestLatencyStackedBar:
 
     def test_to_dataframe(self, create_mock):
         data, columns, expect_dict, expect_columns = get_data_set()
-        # create mock
-        stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
         for column in expect_columns:
             expect_dict[column] = [timestamp * 1e-6 for timestamp in expect_dict[column]]
         expect_df = pd.DataFrame(expect_dict)
 
+        # create mock
+        stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
 
         # create stacked bar data
         output_df = stacked_bar_plot.to_dataframe()

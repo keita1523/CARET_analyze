@@ -96,7 +96,6 @@ class TestStackedBar:
         columns, data, expect_columns, pre_expect_dict = get_data_set()
         records: RecordsInterface = create_records(data, columns)
         expect_columns += ['start time']
-        # expect_records: RecordsInterface = create_records([pre_expect_dict], expect_columns)
         expect_dict = []
         for i in range(len(pre_expect_dict[expect_columns[0]])):
             d = {}
