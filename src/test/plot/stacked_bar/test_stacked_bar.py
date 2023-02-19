@@ -15,13 +15,14 @@
 from caret_analyze import Architecture, Lttng, Application
 from caret_analyze.value_objects import PathStructValue
 from caret_analyze.runtime import NodePath, Path
-from caret_analyze.plot.stacked_bar import StackedBarPlot
+from caret_analyze.runtime.path import ColumnMerger, RecordsMerged
+# from caret_analyze.plot.stacked_bar import StackedBarPlot
 from caret_analyze.plot.stacked_bar import LatencyStackedBar
 from caret_analyze.record import ResponseTime, ColumnValue
-from caret_analyze.record import RecordsFactory, RecordInterface, RecordsInterface
-from caret_analyze.record.record_cpp_impl import RecordsCppImpl
+from caret_analyze.record import RecordsFactory, RecordsInterface
+# from caret_analyze.record.record_cpp_impl import RecordsCppImpl
 
-from collections import defaultdict, UserList
+# from collections import defaultdict, UserList
 import pytest
 
 @pytest.fixture
@@ -34,7 +35,7 @@ def create_mock(mocker):
         for column in columns:
             column_map[column] = column + '_renamed'
         mocker.patch.object(stacked_bar_plot, '_get_response_time_record', return_value=records)
-        mocker.patch.object(stacked_bar_plot, '_get_rename_column_map', return_value=column_map)
+        # mocker.patch.object(stacked_bar_plot, '_get_rename_column_map', return_value=column_map)
         return stacked_bar_plot
     return _create_mock
 
@@ -67,13 +68,40 @@ class TestStackedBar:
         plot.figure()
 
 
-    def test_empty_case(self, create_mock):
-        columns = []
-        data = []
+    def test_empty_case(self, mocker, create_mock):
+        # columns = []
+        # data = []
 
+        # stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
+        # with pytest.raises(ValueError):
+        #     stacked_bar_plot.to_stacked_bar_records_dict()
+        # column_merger_mock = mocker.Mock(spec=ColumnMerger)
+        # mocker.patch('caret_analyze.runtime.path.ColumnMerger',
+        #              return_value=column_merger_mock)
+
+        # records_merged_mock = mocker.Mock(spec=RecordsMerged)
+        # mocker.patch('caret_analyze.runtime.path.RecordsMerged',
+        #              return_value=records_merged_mock)
+
+        # records_mock = mocker.Mock(spec=RecordsInterface)
+        # mocker.patch.object(records_mock, 'clone', return_value=records_mock)
+        # mocker.patch.object(records_mock, 'columns', [])
+
+        # mocker.patch.object(column_merger_mock, 'column_names', [])
+        # mocker.patch.object(records_merged_mock, 'data', records_mock)
+
+        # path_info_mock = mocker.Mock(spec=PathStructValue)
+        # mocker.patch.object(path_info_mock, 'path_name', 'name')
+        # path = Path(path_info_mock, [], None)
+        # stacked_bar_plot = LatencyStackedBar(path)
+        data = []
+        columns = []
         stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
         with pytest.raises(ValueError):
             stacked_bar_plot.to_stacked_bar_records_dict()
+
+    # def test_code(self, mocker):
+
 
     def test_normal(self, create_mock):
         columns = [
@@ -129,6 +157,59 @@ class TestStackedBar:
 
         assert output_dict == expect_dict
         assert output_columns == expect_columns
+
+    def test_normal_case(self, mocker, create_mock):
+        columns = [
+            '/columns_0/rclcpp_publish_timestamp/0_min',
+            '/columns_1/rclcpp_publish_timestamp/0_max',
+            '/columns_2/rcl_publish_timestamp/0',
+            '/columns_3/dds_write_timestamp/0',
+            '/columns_4/callback_0/callback_start_timestamp/0',
+            '/columns_5/rclcpp_publish_timestamp/0_max',
+            '/columns_6/rcl_publish_timestamp/0',
+            '/columns_7/dds_write_timestamp/0',
+            '/columns_8/callback_0/callback_start_timestamp/0',
+        ]
+
+        # create input and expect data
+        # # columns | c0 | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 |
+        # # ======================================================
+        # # data    | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  |
+        # #         | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  |
+        # #         | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 |
+
+        expect_dict = {
+            '[worst - best] response time' : [1, 1, 1], # c1 - c0
+            '/columns_1'                   : [3, 3, 3], # c4 - c1
+            '/columns_4/callback_0'        : [1, 1, 1], # c5 - c4
+            '/columns_5'                   : [3, 3, 3], # c8 - c5
+            'start time'                   : [0, 1, 2], # c0
+        }
+        expect_columns = [
+            '[worst - best] response time',
+            '/columns_1',
+            '/columns_4/callback_0',
+            '/columns_5',
+        ]
+
+        data_num = 3
+        data = []
+        for i in range(data_num):
+            d = {}
+            for j in range(len(columns)):
+                d[columns[j]] = i + j
+            data.append(d)
+
+        # create mock
+        stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
+
+        # create stacked bar data
+        output_dict, output_columns = stacked_bar_plot.to_stacked_bar_records_dict()
+
+        assert output_dict == expect_dict
+        assert output_columns == expect_columns
+
+
 
     def test_get_target_columns(self, mocker):
         target_objects = mocker.Mock(spec=Path)

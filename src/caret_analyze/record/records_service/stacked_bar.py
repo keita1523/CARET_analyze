@@ -38,7 +38,7 @@ class StackedBar:
 ) -> None:
         # rename columns to nodes and topics granularity
         self._records = records
-        self._diff_response_time_name = '/response'
+        self._diff_response_time_name = '[worst - best] response time'
         rename_map: Dict[str, str] = \
             self._get_rename_column_map(self._records.columns)
         renamed_records: RecordsInterface = \
@@ -76,8 +76,8 @@ class StackedBar:
         # data = {column : records.get_column_series(column)}
         # label = 'start time'
 
-        record: RecordsInterface = \
-            RecordsFactory.create_instance([], [ColumnValue(column)])
+        # record: RecordsInterface = \
+        #     RecordsFactory.create_instance([], [ColumnValue(column)])
         series = records.get_column_series(column)
         record_dict = [{xlabel : _ } for _ in series]
         record = RecordsFactory.create_instance(record_dict, [ColumnValue(xlabel)])
