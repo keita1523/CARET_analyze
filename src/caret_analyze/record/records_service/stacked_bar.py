@@ -61,10 +61,8 @@ class StackedBar:
                 x_axis_values.get_column_series(xlabel),
                 xlabel,
             )
-        # stacked_bar_records.append_column(ColumnValue(x_axis_values.columns[0]), x_axis_values.get_column_series(x_axis_values.columns[0]))
-        # stacked_bar_records = self._add_x_axis_keys(stacked_bar_records, 'start time')
-        self._stacked_bar_dict = self._to_dict(stacked_bar_records)
-        # output_dict.update(self._get_stacked_bar_dict(renamed_records, columns))
+        self._stacked_bar_records = stacked_bar_records
+        # self._stacked_bar_dict = self._to_dict(stacked_bar_records)
         self._columns = columns[:-1]
 
     def _get_x_axis_values(
@@ -85,22 +83,16 @@ class StackedBar:
 
         return record
 
-    @staticmethod
-    def _add_x_axis_keys(
-        records: RecordsInterface,
-        x_key: str,
-    ) -> RecordsInterface:
-        record: RecordsInterface = \
-            RecordsFactory.create_instance(records.get_row_series(0), )
+    def to_dict(self) -> Dict[str, List[int]]:
+        return self._to_dict(self._stacked_bar_records)
 
     @property
-    def get_stacked_dict(self) -> Dict[str, List[int]]:
-        # return stacked bar data
-        return self._stacked_bar_dict
-
-    @property
-    def get_columns(self) -> List[str]:
+    def columns(self) -> List[str]:
         return self._columns
+
+    @property
+    def records(self) -> RecordsInterface:
+        return self._stacked_bar_records
 
     @staticmethod
     def _append_column_series(

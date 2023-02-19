@@ -53,13 +53,12 @@ class LatencyStackedBar:
         response_records: RecordsInterface = \
             self._get_response_time_record(self._target_objects)
         stacked_bar = StackedBar(response_records)
-        return stacked_bar.get_stacked_dict, stacked_bar.get_columns
+        return stacked_bar.to_dict(), stacked_bar.columns
 
-    def to_dataframe(self, xaxis_type: str = 'system_time'):
+    def to_dataframe(self, xaxis_type: str = 'system_time'): # not apply other type
         stacked_bar_dict, columns = self.to_stacked_bar_records_dict()
         for column in columns:
             stacked_bar_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
-        # df = pd.DataFrame(stacked_bar_dict, dtype='Int64')
         df = pd.DataFrame(stacked_bar_dict)
         return df
 

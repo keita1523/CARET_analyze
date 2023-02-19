@@ -195,7 +195,7 @@ class Bokeh(VisualizeLibInterface):
         color_generator = get_color_generator()
         color: Sequence[Color] = next(color_generator)
 
-        legend_manager = LegendManager()
+        # legend_manager = LegendManager()
         for y_label, bottom in zip(y_labels[:-1], prev_y_labels):
             renderer = p.vbar(
                 x=x_label,
@@ -207,7 +207,7 @@ class Bokeh(VisualizeLibInterface):
                 legend_label=y_label,
             )
             color = next(color_generator)
-            legend_manager.add_legend(y_label, renderer)
+        #     legend_manager.add_legend(y_label, renderer)
 
         renderer = p.vbar(
             x=x_label,
@@ -217,9 +217,9 @@ class Bokeh(VisualizeLibInterface):
             color=color,
             legend_label=y_labels[-1],
         )
-        legend_manager.add_legend(y_labels[-1], renderer)
-        num_legend_threshold = 20
-        legend_manager.draw_legends(p, num_legend_threshold, full_legends)
+        # legend_manager.add_legend(y_labels[-1], renderer)
+        # num_legend_threshold = 20
+        # legend_manager.draw_legends(p, num_legend_threshold, full_legends)
 
         return p
 
