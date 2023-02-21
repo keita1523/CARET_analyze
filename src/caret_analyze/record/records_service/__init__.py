@@ -15,6 +15,7 @@
 from .frequency import Frequency
 from .latency import Latency
 from .period import Period
+from .range import Range
 from .response_time import ResponseTime
 from .stacked_bar import StackedBar
 
@@ -22,6 +23,7 @@ __all__ = [
     'Frequency',
     'Latency',
     'Period',
+    'Range',
     'ResponseTime',
     'StackedBar',
 ]
