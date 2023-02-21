@@ -610,6 +610,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caret_analyze.record.Range" class="md-nav__link">
+    Range
+  </a>
+  
+    <nav class="md-nav" aria-label="Range">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#caret_analyze.record.records_service.range.Range.get_range" class="md-nav__link">
+    get_range()
+  </a>
+  
+    <nav class="md-nav" aria-label="get_range()">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#caret_analyze.record.records_service.range.Range.get_range--notes" class="md-nav__link">
+    Notes
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caret_analyze.record.RecordInterface" class="md-nav__link">
     RecordInterface
   </a>
@@ -1039,6 +1072,39 @@
   <a href="#caret_analyze.record.records_service.period.Period.to_records" class="md-nav__link">
     to_records()
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caret_analyze.record.Range" class="md-nav__link">
+    Range
+  </a>
+  
+    <nav class="md-nav" aria-label="Range">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#caret_analyze.record.records_service.range.Range.get_range" class="md-nav__link">
+    get_range()
+  </a>
+  
+    <nav class="md-nav" aria-label="get_range()">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#caret_analyze.record.records_service.range.Range.get_range--notes" class="md-nav__link">
+    Notes
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1810,6 +1876,84 @@ Columns
         </tr>
     </tbody>
   </table>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="caret_analyze.record.Range" class="doc doc-heading">
+        <code>Range</code>
+
+
+<a href="#caret_analyze.record.Range" class="headerlink" title="Permanent link">#</a></h2>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Class that calculates minimum/maximum timestamps from a list of records.</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caret_analyze.record.records_service.range.Range.get_range" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_range</span><span class="p">()</span></code>
+
+<a href="#caret_analyze.record.records_service.range.Range.get_range" class="headerlink" title="Permanent link">#</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get minimum and maximum timestamps.</p>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><span title="typing.Tuple">Tuple</span>[int, int]</code>
+          </td>
+          <td><p>Minimum and Maximum timestamps.</p></td>
+        </tr>
+    </tbody>
+  </table>
+      <h5 id="caret_analyze.record.records_service.range.Range.get_range--notes">Notes<a class="headerlink" href="#caret_analyze.record.records_service.range.Range.get_range--notes" title="Permanent link">#</a></h5>
+<p>The first column is system time for now.
+The other columns could be other than system time.
+Only the system time is picked out here.</p>
 
   </div>
 
