@@ -12,23 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Union
-
 from bokeh.plotting import Figure
-
 import pandas as pd
 
-from ..metrics_base import MetricsBase
+from .latency_stacked_bar import LatencyStackedBar
 from ..plot_base import PlotBase
 from ..visualize_lib import VisualizeLibInterface
-from ...exceptions import UnsupportedTypeError
-from ...runtime import CallbackBase, Communication, Publisher, Subscription, Path
-
-# from caret_analyze.runtime.path import Path
-from .latency_stacked_bar import LatencyStackedBar
-
-StackedBarTypes = Union[Path]
-# https://qiita.com/nkay/items/a9cac036d648084196f4
 
 
 class StackedBarPlot(PlotBase):

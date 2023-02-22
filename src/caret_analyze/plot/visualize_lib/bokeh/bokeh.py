@@ -16,11 +16,11 @@ from __future__ import annotations
 
 import datetime
 from logging import getLogger
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List, Sequence, Tuple, Union
 
 from bokeh.models import AdaptiveTicker, Arrow, LinearAxis, NormalHead, Range1d
+from bokeh.plotting import ColumnDataSource  # TODO: delete
 from bokeh.plotting import Figure, figure
-from bokeh.plotting import ColumnDataSource # TODO: delete
 
 import pandas as pd
 
@@ -45,13 +45,12 @@ class Bokeh(VisualizeLibInterface):
     def __init__(self) -> None:
         pass
 
-
     def stacked_bar(
         self,
         metrics,
         xaxis_type: str,
         ywheel_zoom: bool,
-        full_legends: bool, # NOTE: unused because LegendManager not apply stacked bar.
+        full_legends: bool,  # NOTE: unused because LegendManager not apply stacked bar.
     ):
 
         # NOTE: relation betwenn stacked bar graph and data struct
@@ -72,14 +71,13 @@ class Bokeh(VisualizeLibInterface):
         # # |       b1      b2      b3
         # # +-------s1------s2------s3---------->
 
-
         # get stacked bar data
         data: Dict[str, list[int]] = {}
         y_labels: List[str] = []
         fig_args: Dict[str, Union[int, str, List[str]]] = {}
         fig_args, x_label = self._figure_settings(xaxis_type, ywheel_zoom)
 
-
+        # get data
         data, y_labels = metrics.to_stacked_bar_dict()
 
         # data conversion to visualize data as stacked bar graph
@@ -120,7 +118,7 @@ class Bokeh(VisualizeLibInterface):
         elif xaxis_type == 'sim_time':
             fig_args['x_axis_label'] = 'simulation time [s]'
             x_label: str = 'start time'
-        else: # index
+        else:   # index
             fig_args['x_axis_label'] = xaxis_type
             x_label: str = 'index'
 
@@ -132,7 +130,7 @@ class Bokeh(VisualizeLibInterface):
         data: Dict[str, List[int]],
         y_labels: List[str],
         x_label: str,
-    ): # -> Dict[str, List[float]], List[str], List[float]
+    ) -> Tuple[Dict[str, List[float]], List[str], List[float]]:
         """
         Caluclate stacked bar data.
 
@@ -172,12 +170,11 @@ class Bokeh(VisualizeLibInterface):
             output_data[x_label] = self._add_shift_value(output_data[x_label], harf_width_list)
         elif x_label == 'sim_time':
             NotImplementedError()
-        else: # index
-            output_data[x_label] = [i for i in range(len(output_data[y_labels[0]]))]
+        else:  # index
+            output_data[x_label] = list(range(0, len(output_data[y_labels[0]])))
             x_width_list = self._get_x_width_list(output_data[x_label])
 
         return output_data, x_width_list
-
 
     @staticmethod
     def _update_data_unit(
@@ -199,7 +196,6 @@ class Bokeh(VisualizeLibInterface):
             data[prev_] = [data[prev_][i] + data[next_][i] for i in range(len(data[next_]))]
         return data
 
-
     @staticmethod
     def _update_timestamps_to_offset_time(
         x_values: List[float]
@@ -211,11 +207,10 @@ class Bokeh(VisualizeLibInterface):
             new_values.append(time - first_time)
         return new_values
 
-
     @staticmethod
     def _get_x_width_list(x_values: List[float]) -> List[float]:
         """
-        Get width between a x value and next x value
+        Get width between a x value and next x value.
 
         Parameters
         ----------
@@ -228,7 +223,8 @@ class Bokeh(VisualizeLibInterface):
             Width list.
         """
         # TODO: create bokeh_util.py and move this.
-        x_width_list: List[float] = [(x_values[i+1]-x_values[i]) * 0.99 for i in range(len(x_values)-1)]
+        x_width_list: List[float] = \
+            [(x_values[i+1]-x_values[i]) * 0.99 for i in range(len(x_values)-1)]
         x_width_list.append(x_width_list[-1])
         return x_width_list
 
@@ -266,8 +262,9 @@ class Bokeh(VisualizeLibInterface):
         bottom_labels: List[str],
         # unused: List[str],
         x_width_list: List[float],
-    ): # -> ColumnDataSource, List[str]
-        """_summary_
+    ) -> Tuple[ColumnDataSource, List[str]]:
+        """
+        Create source.
 
         Parameters
         ----------
@@ -285,7 +282,6 @@ class Bokeh(VisualizeLibInterface):
         bottom_labels : List[str]
             Bottom labels of each
         """
-
         # TODO: move this to bokeh_source.py
         source = ColumnDataSource(data)
         source.add(y_labels, 'legend')
@@ -306,7 +302,8 @@ class Bokeh(VisualizeLibInterface):
         full_legends: bool,
         coloring_rule: str = 'unique',
     ):
-        """_summary_
+        """
+        Create plot.
 
         Parameters
         ----------
@@ -324,16 +321,7 @@ class Bokeh(VisualizeLibInterface):
             If True, all legends are drawn
             even if the number of legends exceeds the threshold.
         """
-        # def get_color_generator() -> Generator:
-        #     color_palette = self._create_color_palette()
-        #     color_idx = 0
-        #     while True:
-        #         yield color_palette[color_idx]
-        #         color_idx = (color_idx + 1) % len(color_palette)
-
         p = figure(**fig_args)
-        # color_generator = get_color_generator()
-        # color: Sequence[Color] = next(color_generator)
 
         color_selector = ColorSelectorFactory.create_instance(coloring_rule)
 
@@ -341,7 +329,8 @@ class Bokeh(VisualizeLibInterface):
         # legend_manager = LegendManager()
         for y_label, bottom in zip(y_labels[:-1], bottom_labels):
             color = color_selector.get_color(y_label)
-            renderer = p.vbar(
+            # renderer = p.vbar(
+            p.vbar(
                 x=x_label,
                 top=y_label,
                 width='x_width_list',
@@ -354,9 +343,9 @@ class Bokeh(VisualizeLibInterface):
             # TODO: apply to legend manager as folloing code.
             # legend_manager.add_legend(y_label, renderer)
 
-
         color = color_selector.get_color(y_label[-1])
-        renderer = p.vbar(
+        # renderer = p.vbar(
+        p.vbar(
             x=x_label,
             top=y_labels[-1],
             width='x_width_list',
@@ -372,7 +361,6 @@ class Bokeh(VisualizeLibInterface):
 
         return p
 
-
     @staticmethod
     def _update_legend_setting(p):
         # Processing to move legends out of graph area
@@ -382,9 +370,8 @@ class Bokeh(VisualizeLibInterface):
         p.add_layout(new_legend, 'right')
 
         # click policy. 'mute' makes the graph translucent.
-        p.legend.click_policy='mute' # or 'hide'
+        p.legend.click_policy = 'mute'  # or 'hide'
         return p
-
 
     def callback_scheduling(
         self,

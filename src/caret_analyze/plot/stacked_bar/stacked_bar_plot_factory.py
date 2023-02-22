@@ -12,47 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Sequence, Union, Optional
-
-from .stacked_bar_plot import StackedBarPlot
 from .latency_stacked_bar import LatencyStackedBar
-from ..metrics_base import MetricsBase
+from .stacked_bar_plot import StackedBarPlot
 from ..visualize_lib import VisualizeLibInterface
-from ...common import type_check_decorator
 from ...exceptions import UnsupportedTypeError
-from ...runtime import CallbackBase, Communication, Path, Publisher, Subscription
+from ...runtime import Path
 
-
-StackedBarTypes = Union[Path]
 
 class StackedBarPlotFactory:
     """Factory class to create an instance of StackedBarPlot."""
 
     @staticmethod
-    # @type_check_decorator
     def create_instance(
         target_objects: Path,
         visualize_lib: VisualizeLibInterface,
         metrics: str = 'latency',
     ) -> StackedBarPlot:
-        """_summary_
+        """
+        Create stacked bar class.
 
         Parameters
         ----------
-        target_objects : StackedBarTypes
-            _description_
+        target_objects : Path
+            Target path
         metrics : str
             Metrics for stacked bar graph.
-            supported metrics: [normal, percentage]
+            supported metrics: [latency]
         visualize_lib : VisualizeLibInterface
-            _description_
+            Instance of VisualizeLibInterface used for visualization.
 
         Returns
         -------
         StackedBarPlot
-            _description_
+            StackedBarPlot
         """
-        # metrics_: MetricsBase
         if metrics == 'latency':
             metrics_ = LatencyStackedBar(target_objects)
             return StackedBarPlot(metrics_, visualize_lib)
@@ -62,5 +55,5 @@ class StackedBarPlotFactory:
         else:
             raise UnsupportedTypeError(
                 'Unsupported metrics specified. '
-                'Supported metrics: [frequency/latency/period]'
+                'Supported metrics: [latency]'
             )

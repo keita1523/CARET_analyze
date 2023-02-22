@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from caret_analyze.runtime import Path
 from caret_analyze.plot.stacked_bar import LatencyStackedBar
 from caret_analyze.record import ColumnValue, RecordsFactory
+from caret_analyze.runtime import Path
 
-import pytest
 import pandas as pd
+import pytest
+
 
 @pytest.fixture
 def create_mock(mocker):
@@ -31,6 +32,7 @@ def create_mock(mocker):
         mocker.patch.object(stacked_bar_plot, '_get_response_time_record', return_value=records)
         return stacked_bar_plot
     return _create_mock
+
 
 def get_data_set():
     columns = [
@@ -53,11 +55,11 @@ def get_data_set():
     # #         | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 |
 
     expect_dict = {
-        '[worst - best] response time' : [1, 1, 1], # c1 - c0
-        '/columns_1'                   : [3, 3, 3], # c4 - c1
-        '/columns_4/callback_0'        : [1, 1, 1], # c5 - c4
-        '/columns_5'                   : [3, 3, 3], # c8 - c5
-        'start time'                   : [0, 1, 2], # c0
+        '[worst - best] response time': [1, 1, 1],  # c1 - c0
+        '/columns_1':                   [3, 3, 3],  # c4 - c1
+        '/columns_4/callback_0':        [1, 1, 1],  # c5 - c4
+        '/columns_5':                   [3, 3, 3],  # c8 - c5
+        'start time':                   [0, 1, 2],  # c0
     }
     expect_columns = [
         '[worst - best] response time',
@@ -85,7 +87,6 @@ class TestLatencyStackedBar:
         stacked_bar_plot: LatencyStackedBar = create_mock(data, columns)
         with pytest.raises(ValueError):
             stacked_bar_plot.to_stacked_bar_dict()
-
 
     def test_default_case(self, create_mock):
         data, columns, expect_dict, expect_columns = get_data_set()

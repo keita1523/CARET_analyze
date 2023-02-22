@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Dict, List, Tuple
+
 import pandas as pd
 
 from ...record import RecordsInterface, ResponseTime, StackedBar
 from ...runtime import Path
+
 
 class LatencyStackedBar:
     """Class that provides latency stacked bar data."""
@@ -44,7 +47,6 @@ class LatencyStackedBar:
         pd.DataFrame
             Latency dataframe.
         """
-
         # TODO: apply xaxis_type
         stacked_bar_dict, columns = self.to_stacked_bar_dict()
         for column in columns:
@@ -54,9 +56,9 @@ class LatencyStackedBar:
 
     def to_stacked_bar_dict(
         self,
-    ): # -> Dict[str, List[int]], List[str]
+    ) -> Tuple[Dict[str, List[int]], List[str]]:
         """
-        Get stacked bar dict and columns
+        Get stacked bar dict and columns.
 
         Returns
         -------
@@ -86,7 +88,6 @@ class LatencyStackedBar:
         RecordsInterface
             Response time records of the path.
         """
-
         response_time = ResponseTime(target_object.to_records(),
                                      columns=target_object.column_names)
         # include timestamp of response time (best, worst)
