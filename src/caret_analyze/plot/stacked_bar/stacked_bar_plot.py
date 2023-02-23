@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
+
 from bokeh.plotting import Figure
+
 import pandas as pd
 
 from .latency_stacked_bar import LatencyStackedBar
@@ -21,14 +24,7 @@ from ..visualize_lib import VisualizeLibInterface
 
 
 class StackedBarPlot(PlotBase):
-    """
-    Class that provides API of Stacked Bar graph.
-
-    Parameters
-    ----------
-    PlotBase : _type_
-        _description_
-    """
+    """Class that provides API of Stacked Bar graph."""
 
     def __init__(
         self,
@@ -40,10 +36,16 @@ class StackedBarPlot(PlotBase):
 
     def figure(
         self,
-        xaxis_type: str = 'system_time',
-        ywheel_zoom: bool = True,
-        full_legends: bool = False,
+        xaxis_type: Optional[str] = 'system_time',
+        ywheel_zoom: Optional[bool] = True,
+        full_legends: Optional[bool] = False,
     ) -> Figure:
+
+        # Set default value
+        xaxis_type = xaxis_type or 'system_time'
+        ywheel_zoom = ywheel_zoom if ywheel_zoom is not None else True
+        full_legends = full_legends if full_legends is not None else False
+
         return self._visualize_lib.stacked_bar(
             self._metrics,
             xaxis_type,

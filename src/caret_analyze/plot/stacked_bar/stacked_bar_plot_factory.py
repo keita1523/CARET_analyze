@@ -45,6 +45,7 @@ class StackedBarPlotFactory:
         -------
         StackedBarPlot
             StackedBarPlot
+
         """
         if metrics == 'latency':
             metrics_ = LatencyStackedBar(target_objects)

@@ -100,8 +100,8 @@ class TestLatencyStackedBar:
         assert output_columns == expect_columns
 
     def test_to_dataframe(self, create_mock):
-        data, columns, expect_dict, expect_columns = get_data_set()
-        for column in expect_columns:
+        data, columns, expect_dict, _ = get_data_set()
+        for column in expect_dict.keys():
             expect_dict[column] = [timestamp * 1e-6 for timestamp in expect_dict[column]]
         expect_df = pd.DataFrame(expect_dict)
 

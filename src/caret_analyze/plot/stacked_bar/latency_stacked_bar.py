@@ -46,12 +46,17 @@ class LatencyStackedBar:
         -------
         pd.DataFrame
             Latency dataframe.
+
         """
         # TODO: apply xaxis_type
-        stacked_bar_dict, columns = self.to_stacked_bar_dict()
-        for column in columns:
-            stacked_bar_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
-        df = pd.DataFrame(stacked_bar_dict)
+
+        # NOTE: returned columns aren't used because they don't include 'start time'
+        stacked_bar_dict, _ = self.to_stacked_bar_dict()
+        millisecond_dict: Dict[str, List[float]] = {}
+        print(stacked_bar_dict.keys())
+        for column in stacked_bar_dict.keys():
+            millisecond_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
+        df = pd.DataFrame(millisecond_dict)
         return df
 
     def to_stacked_bar_dict(
@@ -65,6 +70,7 @@ class LatencyStackedBar:
         Dict[str, List[int]], List[str]
             Stacked bar dict.
             Columns (not include 'start time').
+
         """
         response_records: RecordsInterface = \
             self._get_response_time_record(self._target_objects)
@@ -87,6 +93,7 @@ class LatencyStackedBar:
         -------
         RecordsInterface
             Response time records of the path.
+
         """
         response_time = ResponseTime(target_object.to_records(),
                                      columns=target_object.column_names)

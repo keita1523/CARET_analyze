@@ -51,7 +51,7 @@ class Bokeh(VisualizeLibInterface):
         xaxis_type: str,
         ywheel_zoom: bool,
         full_legends: bool,  # NOTE: unused because LegendManager not apply stacked bar.
-    ):
+    ) -> Figure:
 
         # NOTE: relation betwenn stacked bar graph and data struct
         # # data = {
@@ -112,15 +112,16 @@ class Bokeh(VisualizeLibInterface):
             fig_args['tools'] = ['xwheel_zoom', 'xpan', 'save', 'reset']
             fig_args['active_scroll'] = 'xwheel_zoom'
 
+        x_label: str = ''
         if xaxis_type == 'system_time':
             fig_args['x_axis_label'] = 'system time [s]'
-            x_label: str = 'start time'
+            x_label = 'start time'
         elif xaxis_type == 'sim_time':
             fig_args['x_axis_label'] = 'simulation time [s]'
-            x_label: str = 'start time'
+            x_label = 'start time'
         else:   # index
             fig_args['x_axis_label'] = xaxis_type
-            x_label: str = 'index'
+            x_label = 'index'
 
         fig_args['title'] = 'Stacked bar of Response Time.'
         return fig_args, x_label
@@ -130,7 +131,7 @@ class Bokeh(VisualizeLibInterface):
         data: Dict[str, List[int]],
         y_labels: List[str],
         x_label: str,
-    ) -> Tuple[Dict[str, List[float]], List[str], List[float]]:
+    ) -> Tuple[Dict[str, List[float]],  List[float]]:
         """
         Caluclate stacked bar data.
 
@@ -149,6 +150,7 @@ class Bokeh(VisualizeLibInterface):
             Stacked bar data.
         List[float]
             Width list of bars.
+
         """
         output_data: Dict[str, List[float]] = {}
         x_width_list: List[float] = []
@@ -183,9 +185,10 @@ class Bokeh(VisualizeLibInterface):
     ) -> Dict[str, List[float]]:
         # TODO: make timeseries and callback scheduling function use this function.
         #       create bokeh_util.py
+        output_data: Dict[str, List[float]] = {}
         for key in data.keys():
-            data[key] = [d * unit for d in data[key]]
-        return data
+            output_data[key] = [d * unit for d in data[key]]
+        return output_data
 
     @staticmethod
     def _stacked_y_values(
@@ -221,6 +224,7 @@ class Bokeh(VisualizeLibInterface):
         -------
         List[float]
             Width list.
+
         """
         # TODO: create bokeh_util.py and move this.
         x_width_list: List[float] = \
@@ -247,6 +251,7 @@ class Bokeh(VisualizeLibInterface):
         -------
         List[float]
             Updated values.
+
         """
         # TODO: create bokeh_util.py and move this.
         return [values[i] + shift_values[i] for i in range(len(values))]
@@ -260,7 +265,6 @@ class Bokeh(VisualizeLibInterface):
         data: Dict[str, list[float]],
         y_labels: List[str],
         bottom_labels: List[str],
-        # unused: List[str],
         x_width_list: List[float],
     ) -> Tuple[ColumnDataSource, List[str]]:
         """
@@ -272,6 +276,9 @@ class Bokeh(VisualizeLibInterface):
             Original data.
         y_labels : List[str]
             Y axis labels
+        bottom_labels : List[str]
+            Bottom of each square in stacked bar.
+            Bottom is the top of square just below.
         x_width_list : List[float]
             Width list of bars.
 
@@ -281,14 +288,13 @@ class Bokeh(VisualizeLibInterface):
             Source data.
         bottom_labels : List[str]
             Bottom labels of each
+
         """
         # TODO: move this to bokeh_source.py
         source = ColumnDataSource(data)
         source.add(y_labels, 'legend')
         source.add(x_width_list, 'x_width_list')
         for y_label, bottom_label in zip(y_labels[1:], bottom_labels):
-            # bottom_label = y_label + '_bottom'
-            # bottom_labels.append(bottom_label)
             source.add(data[y_label], bottom_label)
         return source
 
@@ -320,6 +326,9 @@ class Bokeh(VisualizeLibInterface):
         full_legends : bool
             If True, all legends are drawn
             even if the number of legends exceeds the threshold.
+        coloring_rule : str
+            The unit of color change
+
         """
         p = figure(**fig_args)
 
