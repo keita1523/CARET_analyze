@@ -143,8 +143,13 @@ class Bokeh(VisualizeLibInterface):
             Source data.
         y_labels : List[str]
             Y axis labels that are Node/Topic name.
+        xaxis_type : str
+            Type of x-axis of the line graph to be plotted.
+            "system_time", "index", or "sim_time" can be specified.
+            The default is "system_time".
         x_label : str
-            X axis label that is 'start time'.
+            X-axis label of data dict.
+            "start time" or "index".
 
         Returns
         -------
