@@ -81,7 +81,8 @@ class Bokeh(VisualizeLibInterface):
         data, y_labels = metrics.to_stacked_bar_dict()
 
         # data conversion to visualize data as stacked bar graph
-        stacked_bar_data, x_width_list = self._get_stacked_bar_data(data, y_labels, x_label)
+        stacked_bar_data, x_width_list = \
+            self._get_stacked_bar_data(data, y_labels, xaxis_type, x_label)
         bottom_labels = self._get_bottom_labels(y_labels)
         bottom_labels = bottom_labels[1:]
         source = self._create_source(stacked_bar_data, y_labels, bottom_labels, x_width_list)
@@ -130,6 +131,7 @@ class Bokeh(VisualizeLibInterface):
         self,
         data: Dict[str, List[int]],
         y_labels: List[str],
+        xaxis_type: str,
         x_label: str,
     ) -> Tuple[Dict[str, List[float]],  List[float]]:
         """
@@ -161,7 +163,7 @@ class Bokeh(VisualizeLibInterface):
         # Calculate the stacked y values
         output_data = self._stacked_y_values(output_data, y_labels)
 
-        if x_label == 'system_time':
+        if xaxis_type == 'system_time':
             # Update the timestamps from absolutely time to offset time
             output_data[x_label] = self._update_timestamps_to_offset_time(output_data[x_label])
 
@@ -170,7 +172,7 @@ class Bokeh(VisualizeLibInterface):
 
             # Slide x axis values so that the bottom left of bars are the start time.
             output_data[x_label] = self._add_shift_value(output_data[x_label], harf_width_list)
-        elif x_label == 'sim_time':
+        elif xaxis_type == 'sim_time':
             NotImplementedError()
         else:  # index
             output_data[x_label] = list(range(0, len(output_data[y_labels[0]])))
@@ -379,7 +381,7 @@ class Bokeh(VisualizeLibInterface):
         p.add_layout(new_legend, 'right')
 
         # click policy. 'mute' makes the graph translucent.
-        p.legend.click_policy = 'mute'  # or 'hide'
+        p.legend.click_policy = 'mute'  # 'mute' or 'hide'
         return p
 
     def callback_scheduling(
