@@ -109,23 +109,42 @@ class TestStackedBar:
         result = to_dict(stacked_bar.records)
         assert result == expect_dict
 
-    # def test_flow(self):
-    #     from caret_analyze import Architecture, Lttng, Application
-    #     arch_file = "/home/emb4/tmp_tracedata/stacked_bar/arch_stacked_bar.yaml"
-    #     # trace_data = "test03_main"
-    #     trace_data = "/home/emb4/tmp_tracedata/test09"
-    #     target_path1 = "target_path1"
-    #     target_path2 = "target_path2"
-    #     answer_path = "answer_path"
-    #     arch = Architecture('yaml', arch_file)
-    #     lttng = Lttng(trace_data)
-    #     app = Application(arch, lttng)
-    #     path1= arch.get_path(target_path1)
-    #     path2 = arch.get_path(target_path2)
-    #     answer = arch.get_path(answer_path)
-    #     from caret_analyze.plot import Plot
-    #     path1= arch.get_path(target_path1)
-    #     path = app.get_path(target_path1)
-    #     print(type(path))
-    #     plot = Plot.create_response_time_stacked_bar_plot(path)
-    #     plot.figure()
+    def test_flow(self):
+        from caret_analyze import Architecture, Lttng, Application
+        arch_file = "/home/emb4/tmp_tracedata/stacked_bar/arch_stacked_bar.yaml"
+        # trace_data = "test03_main"
+        trace_data = "/home/emb4/tmp_tracedata/test09"
+        target_path1 = "target_path1"
+        target_path2 = "target_path2"
+        answer_path = "answer_path"
+        arch = Architecture('yaml', arch_file)
+        lttng = Lttng(trace_data)
+        app = Application(arch, lttng)
+        path1= arch.get_path(target_path1)
+        path2 = arch.get_path(target_path2)
+        answer = arch.get_path(answer_path)
+        from caret_analyze.plot import Plot
+        path1= arch.get_path(target_path1)
+        path = app.get_path(target_path1)
+        print(type(path))
+        plot = Plot.create_response_time_stacked_bar_plot(path)
+        plot.figure()
+
+    def test_timeseres(self):
+        from caret_analyze import Lttng, LttngEventFilter
+        from caret_analyze.plot import Plot
+        from caret_analyze import Architecture, Lttng, Application
+        arch_file = "/home/emb4/tmp_tracedata/stacked_bar/arch_stacked_bar.yaml"
+        # trace_data = "test03_main"
+        trace_data = "/home/emb4/tmp_tracedata/test09"
+        target_path1 = "target_path1"
+        target_path2 = "target_path2"
+        answer_path = "answer_path"
+
+        arch = Architecture('yaml', arch_file)
+        lttng = Lttng(trace_data, event_filters=[
+            LttngEventFilter.duration_filter(10, 5)])
+        app = Application(arch, lttng)
+
+        plot = Plot.create_callback_period_plot(app.callbacks)
+        plot.show()

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from logging import getLogger
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bokeh.models import GlyphRenderer, HoverTool, Legend
 
@@ -24,15 +24,17 @@ from ....exceptions import InvalidArgumentError
 from ....runtime import (CallbackBase, Communication, Publisher, Subscription,
                          SubscriptionCallback, TimerCallback)
 
+from ....runtime import Path
+
 TimeSeriesTypes = Union[CallbackBase, Communication, Union[Publisher, Subscription]]
 
 logger = getLogger(__name__)
 
-
+# TODO: rename HoverKeys
 class LegendKeys:
     """Legend keys."""
 
-    _SUPPORTED_GRAPH_TYPE = ['callback_scheduling_bar', 'callback_scheduling_rect', 'timeseries']
+    _SUPPORTED_GRAPH_TYPE = ['callback_scheduling_bar', 'callback_scheduling_rect', 'timeseries', 'stacked_bar']
 
     def __init__(self, graph_type: str, target_object: TimeSeriesTypes) -> None:
         self._validate(graph_type, target_object)
@@ -55,6 +57,11 @@ class LegendKeys:
             raise InvalidArgumentError(
                 "'target_object' must be [CallbackBase/Communication/Publisher/Subscription]"
                 'in timeseries graph.'
+            )
+
+        if (graph_type == 'stacked_bar' and not isinstance(target_object, Path)):
+            raise InvalidArgumentError(
+                "'target_object' must be Path in stacked bar graph."
             )
 
     def to_list(self) -> List[str]:
@@ -83,6 +90,9 @@ class LegendKeys:
                                'publish_node_name', 'subscribe_node_name']
             elif isinstance(self._target_object, (Publisher, Subscription)):
                 legend_keys = ['legend_label', 'node_name', 'topic_name']
+
+        if self._graph_type == 'stacked_bar':
+            legend_keys = ['legend_label', 'path_name']
 
         return legend_keys
 
@@ -116,7 +126,7 @@ class HoverCreator:
             tooltips=tips_str, point_policy='follow_mouse', toggleable=False, **options
         )
 
-
+# TODO: rename HoverSource
 class LegendSource:
     """Legend source."""
 
@@ -183,7 +193,8 @@ class LegendManager:
     def add_legend(
         self,
         target_object: Any,
-        renderer: GlyphRenderer
+        renderer: GlyphRenderer,
+        legend_word: Optional[str] = None,
     ) -> None:
         """
         Store a legend of the input object internally.
@@ -196,7 +207,7 @@ class LegendManager:
             Instance of renderer.
 
         """
-        label = self.get_label(target_object)
+        label = self.get_label(target_object, legend_word)
         self._legend_items.append((label, [renderer]))
         self._legend[target_object] = label
 
@@ -234,7 +245,11 @@ class LegendManager:
 
         return legends
 
-    def get_label(self, target_object: Any) -> str:
+    def get_label(
+        self,
+        target_object: Any,
+        word: Optional[str] = None,
+    ) -> str:
         """
         Get label name of target object.
 
@@ -249,6 +264,11 @@ class LegendManager:
             Label name of target object.
 
         """
+        if word is not None:
+            label = word
+            self._legend[target_object] = label
+            return label
+
         if target_object in self._legend:
             return self._legend[target_object]
 

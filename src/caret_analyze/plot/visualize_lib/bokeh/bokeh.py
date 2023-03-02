@@ -28,6 +28,7 @@ from .callback_scheduling_source import CallbackSchedBarSource, CallbackSchedRec
 from .color_selector import ColorSelectorFactory
 from .legend import LegendManager
 from .timeseries_source import LineSource
+from .stacked_bar_source import StackedBarSource
 from ..visualize_lib_interface import VisualizeLibInterface
 from ...metrics_base import MetricsBase
 from ....common import Util
@@ -72,33 +73,67 @@ class Bokeh(VisualizeLibInterface):
         # # |       b1      b2      b3
         # # +-------s1------s2------s3---------->
 
-        # get stacked bar data
-        data: Dict[str, list[int]] = {}
-        y_labels: List[str] = []
-        fig_args: Dict[str, Union[int, str, List[str]]] = {}
-        fig_args, x_label = self._figure_settings(xaxis_type, ywheel_zoom)
-
-        # get data
+        # # get stacked bar data
+        # data: Dict[str, list[int]] = {}
+        # y_labels: List[str] = []
+        # fig_args: Dict[str, Union[int, str, List[str]]] = {}
+        # fig_args, x_label = self._figure_settings(xaxis_type, ywheel_zoom)
+        title: str = 'Stacked bar graph'
+        y_axis_label = 'latency [ms]'
+        target_objects = metrics.target_objects
         data, y_labels = metrics.to_stacked_bar_dict()
 
-        # data conversion to visualize data as stacked bar graph
+        fig = self._init_figure(title, ywheel_zoom, xaxis_type, y_axis_label)
+        records_range = Range([target_objects.to_records()])
+        frame_min, frame_max = records_range.get_range()
+        x_label = 'start time'
+        if xaxis_type == 'system_time':
+            self._apply_x_axis_offset(fig, frame_min, frame_max)
+        elif xaxis_type == 'index':
+            x_label = 'index'
+
+
+        color_selector = ColorSelectorFactory.create_instance(coloring_rule='unique')
+        legend_manager = LegendManager()
+        stacked_bar_source = StackedBarSource(legend_manager, target_objects, 0.0, xaxis_type)
+        fig.add_tools(stacked_bar_source.create_hover())
         stacked_bar_data, x_width_list = \
             self._get_stacked_bar_data(data, y_labels, xaxis_type, x_label)
         bottom_labels = self._get_bottom_labels(y_labels)
         bottom_labels = bottom_labels[1:]
-        source = self._create_source(stacked_bar_data, y_labels, bottom_labels, x_width_list)
-
-        p = self._create_bar_plot(
-            fig_args,
-            source,
-            x_label,
-            y_labels,
-            bottom_labels,
-            full_legends,
+        source = stacked_bar_source.generate(stacked_bar_data, y_labels, bottom_labels, x_width_list)
+        # source = self._create_source(stacked_bar_data, y_labels, bottom_labels, x_width_list)
+        for y_label, bottom in zip(y_labels[:-1], bottom_labels):
+            color = color_selector.get_color(y_label)
+            renderer = fig.vbar(
+                x=x_label,
+                top=y_label,
+                width='x_width_list',
+                source=source,
+                color=color,
+                bottom=bottom,
+                # legend_label=y_label,
+            )
+            legend_manager.add_legend(y_label, renderer, y_label)
+            # color = next(color_generator)
+        color = color_selector.get_color(y_labels[-1])
+        renderer = fig.vbar(
+            x=x_label,
+            top=y_labels[-1],
+            width='x_width_list',
+            source=source,
+            color=color,
+            # legend_label=y_labels[-1],
         )
-        p = self._update_legend_setting(p)
+        legend_manager.add_legend(y_labels[-1], renderer, y_labels[-1])
 
-        return p
+        num_legend_threshold = 20
+        legends = legend_manager.create_legends(num_legend_threshold, full_legends)
+        for legend in legends:
+            fig.add_layout(legend, 'right')
+        fig.legend.click_policy = 'mute'
+
+        return fig
 
     @staticmethod
     def _figure_settings(
@@ -376,18 +411,6 @@ class Bokeh(VisualizeLibInterface):
         # num_legend_threshold = 20
         # legend_manager.draw_legends(p, num_legend_threshold, full_legends)
 
-        return p
-
-    @staticmethod
-    def _update_legend_setting(p):
-        # Processing to move legends out of graph area
-        # https://stackoverflow.com/questions/46730609/position-the-legend-outside-the-plot-area-with-bokeh
-        new_legend = p.legend[0]
-        p.legend[0] = None
-        p.add_layout(new_legend, 'right')
-
-        # click policy. 'mute' makes the graph translucent.
-        p.legend.click_policy = 'mute'  # 'mute' or 'hide'
         return p
 
     def callback_scheduling(
