@@ -76,8 +76,6 @@ class Bokeh(VisualizeLibInterface):
         # # get stacked bar data
         # data: Dict[str, list[int]] = {}
         # y_labels: List[str] = []
-        # fig_args: Dict[str, Union[int, str, List[str]]] = {}
-        # fig_args, x_label = self._figure_settings(xaxis_type, ywheel_zoom)
         title: str = 'Stacked bar graph'
         y_axis_label = 'latency [ms]'
         target_objects = metrics.target_objects
@@ -91,6 +89,8 @@ class Bokeh(VisualizeLibInterface):
             self._apply_x_axis_offset(fig, frame_min, frame_max)
         elif xaxis_type == 'index':
             x_label = 'index'
+        # else:  # sim_time
+        #     raise NotImplementedError()
 
 
         color_selector = ColorSelectorFactory.create_instance(coloring_rule='unique')
@@ -214,7 +214,7 @@ class Bokeh(VisualizeLibInterface):
             # Slide x axis values so that the bottom left of bars are the start time.
             output_data[x_label] = self._add_shift_value(output_data[x_label], harf_width_list)
         elif xaxis_type == 'sim_time':
-            NotImplementedError()
+            raise NotImplementedError()
         else:  # index
             output_data[x_label] = list(range(0, len(output_data[y_labels[0]])))
             x_width_list = self._get_x_width_list(output_data[x_label])
