@@ -14,18 +14,19 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List
 
 from bokeh.models import HoverTool
 from bokeh.plotting import ColumnDataSource
 
 from .legend import HoverCreator, LegendKeys, LegendManager, LegendSource
 
-from ....record import RecordsInterface
-from ....runtime import CallbackBase, Communication, Publisher, Subscription
+# from ....record import RecordsInterface
+# from ....runtime import CallbackBase, Communication, Publisher, Subscription
+
 
 class StackedBarSource:
-    """Class to generate stacked bar source"""
+    """Class to generate stacked bar source."""
 
     def __init__(
         self,

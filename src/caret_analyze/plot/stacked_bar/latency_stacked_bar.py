@@ -77,7 +77,7 @@ class LatencyStackedBar:
         """
         response_records: RecordsInterface = \
             self._get_response_time_record(self._target_objects)
-        stacked_bar = StackedBar(response_records, self._case)
+        stacked_bar = StackedBar(response_records)
         return stacked_bar.to_dict(), stacked_bar.columns
 
     def _get_response_time_record(
@@ -98,7 +98,6 @@ class LatencyStackedBar:
             Response time records of the path.
 
         """
-
         response_time = ResponseTime(target_object.to_records(),
                                      columns=target_object.column_names)
         # include timestamp of response time (best, worst)

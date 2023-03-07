@@ -30,11 +30,17 @@ TimeSeriesTypes = Union[CallbackBase, Communication, Union[Publisher, Subscripti
 
 logger = getLogger(__name__)
 
+
 # TODO: rename HoverKeys
 class LegendKeys:
     """Legend keys."""
 
-    _SUPPORTED_GRAPH_TYPE = ['callback_scheduling_bar', 'callback_scheduling_rect', 'timeseries', 'stacked_bar']
+    _SUPPORTED_GRAPH_TYPE = [
+        'callback_scheduling_bar',
+        'callback_scheduling_rect',
+        'timeseries',
+        'stacked_bar',
+    ]
 
     def __init__(self, graph_type: str, target_object: TimeSeriesTypes) -> None:
         self._validate(graph_type, target_object)
@@ -126,6 +132,7 @@ class HoverCreator:
             tooltips=tips_str, point_policy='follow_mouse', toggleable=False, **options
         )
 
+
 # TODO: rename HoverSource
 class LegendSource:
     """Legend source."""
@@ -205,6 +212,10 @@ class LegendManager:
             Instance of any class.
         renderer : bokeh.models.GlyphRenderer
             Instance of renderer.
+        legend_word : Optional[str]
+            Sentence of the legend.
+            If None, the class name of
+            the target object is used.
 
         """
         label = self.get_label(target_object, legend_word)
@@ -257,6 +268,10 @@ class LegendManager:
         ----------
         target_object : Any
             Target object.
+        word : Optional[str]
+            Sentence of the legend.
+            If None, the class name of
+            the target object is used.
 
         Returns
         -------

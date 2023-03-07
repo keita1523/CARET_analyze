@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import datetime
 from logging import getLogger
-from typing import Dict, List, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 from bokeh.models import AdaptiveTicker, Arrow, LinearAxis, NormalHead, Range1d
 from bokeh.plotting import ColumnDataSource  # TODO: delete
@@ -27,8 +27,8 @@ import pandas as pd
 from .callback_scheduling_source import CallbackSchedBarSource, CallbackSchedRectSource
 from .color_selector import ColorSelectorFactory
 from .legend import LegendManager
-from .timeseries_source import LineSource
 from .stacked_bar_source import StackedBarSource
+from .timeseries_source import LineSource
 from ..visualize_lib_interface import VisualizeLibInterface
 from ...metrics_base import MetricsBase
 from ....common import Util
@@ -89,9 +89,8 @@ class Bokeh(VisualizeLibInterface):
             self._apply_x_axis_offset(fig, frame_min, frame_max)
         elif xaxis_type == 'index':
             x_label = 'index'
-        # else:  # sim_time
-        #     raise NotImplementedError()
-
+        else:  # sim_time
+            raise NotImplementedError()
 
         color_selector = ColorSelectorFactory.create_instance(coloring_rule='unique')
         legend_manager = LegendManager()
@@ -101,8 +100,13 @@ class Bokeh(VisualizeLibInterface):
             self._get_stacked_bar_data(data, y_labels, xaxis_type, x_label)
         bottom_labels = self._get_bottom_labels(y_labels)
         bottom_labels = bottom_labels[1:]
-        source = stacked_bar_source.generate(stacked_bar_data, y_labels, bottom_labels, x_width_list)
-        # source = self._create_source(stacked_bar_data, y_labels, bottom_labels, x_width_list)
+        source = stacked_bar_source.generate(
+            stacked_bar_data,
+            y_labels,
+            bottom_labels,
+            x_width_list
+        )
+
         for y_label, bottom in zip(y_labels[:-1], bottom_labels):
             color = color_selector.get_color(y_label)
             renderer = fig.vbar(

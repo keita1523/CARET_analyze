@@ -41,6 +41,8 @@ class StackedBarPlotFactory:
             supported metrics: [latency]
         visualize_lib : VisualizeLibInterface
             Instance of VisualizeLibInterface used for visualization.
+        case : str
+            To choose best or worst case response time.
 
         Returns
         -------
