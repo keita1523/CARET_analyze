@@ -127,7 +127,7 @@ class TestStackedBar:
         path1= arch.get_path(target_path1)
         path = app.get_path(target_path1)
         print(type(path))
-        plot = Plot.create_response_time_stacked_bar_plot(path)
+        plot = Plot.create_response_time_stacked_bar_plot(path, case='best')
         plot.figure()
 
     def test_timeseres(self):

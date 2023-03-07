@@ -27,6 +27,7 @@ class StackedBarPlotFactory:
         target_objects: Path,
         visualize_lib: VisualizeLibInterface,
         metrics: str = 'latency',
+        case: str = 'worst',
     ) -> StackedBarPlot:
         """
         Create stacked bar class.
@@ -48,7 +49,7 @@ class StackedBarPlotFactory:
 
         """
         if metrics == 'latency':
-            metrics_ = LatencyStackedBar(target_objects)
+            metrics_ = LatencyStackedBar(target_objects, case)
             return StackedBarPlot(metrics_, visualize_lib)
         elif metrics == 'percentage':
             # TODO

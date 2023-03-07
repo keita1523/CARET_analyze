@@ -68,12 +68,14 @@ class Plot:
         # self,
         target_object: Path,
         metrics: str = 'latency',
+        case: str = 'worst',
     ):
         visualize_lib = VisualizeLibFactory.create_instance()
         plot = StackedBarPlotFactory.create_instance(
             target_object,
             visualize_lib,
             metrics,
+            case,
         )
         return plot
 

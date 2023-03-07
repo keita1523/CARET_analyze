@@ -29,7 +29,7 @@ class StackedBarPlot(PlotBase):
     def __init__(
         self,
         metrics: LatencyStackedBar,
-        visualize_lib: VisualizeLibInterface
+        visualize_lib: VisualizeLibInterface,
     ) -> None:
         self._metrics = metrics
         self._visualize_lib = visualize_lib

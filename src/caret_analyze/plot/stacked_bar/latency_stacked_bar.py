@@ -26,8 +26,10 @@ class LatencyStackedBar:
     def __init__(
         self,
         target_objects: Path,
+        case: str,
     ) -> None:
         self._target_objects = target_objects
+        self._case = case
 
     def to_dataframe(
         self,
@@ -51,6 +53,7 @@ class LatencyStackedBar:
         # TODO: apply xaxis_type
 
         # NOTE: returned columns aren't used because they don't include 'start time'
+        # TODO: delete 1e-6
         stacked_bar_dict, _ = self.to_stacked_bar_dict()
         millisecond_dict: Dict[str, List[float]] = {}
         print(stacked_bar_dict.keys())
@@ -74,11 +77,11 @@ class LatencyStackedBar:
         """
         response_records: RecordsInterface = \
             self._get_response_time_record(self._target_objects)
-        stacked_bar = StackedBar(response_records)
+        stacked_bar = StackedBar(response_records, self._case)
         return stacked_bar.to_dict(), stacked_bar.columns
 
-    @staticmethod
     def _get_response_time_record(
+        self,
         target_object: Path
     ) -> RecordsInterface:
         """
@@ -95,9 +98,13 @@ class LatencyStackedBar:
             Response time records of the path.
 
         """
+
         response_time = ResponseTime(target_object.to_records(),
                                      columns=target_object.column_names)
         # include timestamp of response time (best, worst)
+        if self._case == 'best':
+            return response_time.to_best_case_response_records()
+
         return response_time.to_response_records()
 
     @property
