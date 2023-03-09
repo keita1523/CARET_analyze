@@ -21,10 +21,6 @@ from bokeh.plotting import ColumnDataSource
 
 from .legend import HoverCreator, LegendKeys, LegendManager, LegendSource
 
-# from ....record import RecordsInterface
-# from ....runtime import CallbackBase, Communication, Publisher, Subscription
-
-
 class StackedBarSource:
     """Class to generate stacked bar source."""
 
@@ -57,8 +53,9 @@ class StackedBarSource:
         """
         return self._hover.create(options)
 
-    @staticmethod
     def generate(
+        self,
+        target_object,
         data: Dict[str, list[float]],
         y_labels: List[str],
         bottom_labels: List[str],
@@ -67,6 +64,10 @@ class StackedBarSource:
         source = ColumnDataSource(data)
         source.add(y_labels, 'legend')
         source.add(x_width_list, 'x_width_list')
+        legend_source = self._legend_source.generate(target_object)
+
+        for description in legend_source:
+            source.add(legend_source[description] * len(x_width_list), description)
         for y_label, bottom_label in zip(y_labels[1:], bottom_labels):
             source.add(data[y_label], bottom_label)
         return source

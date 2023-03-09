@@ -74,8 +74,8 @@ class Bokeh(VisualizeLibInterface):
         # # +-------s1------s2------s3---------->
 
         # # get stacked bar data
-        # data: Dict[str, list[int]] = {}
-        # y_labels: List[str] = []
+        data: Dict[str, list[int]] = {}
+        y_labels: List[str] = []
         title: str = 'Stacked bar graph'
         y_axis_label = 'latency [ms]'
         target_objects = metrics.target_objects
@@ -101,6 +101,7 @@ class Bokeh(VisualizeLibInterface):
         bottom_labels = self._get_bottom_labels(y_labels)
         bottom_labels = bottom_labels[1:]
         source = stacked_bar_source.generate(
+            target_objects,
             stacked_bar_data,
             y_labels,
             bottom_labels,

@@ -26,7 +26,7 @@ class LatencyStackedBar:
     def __init__(
         self,
         target_objects: Path,
-        case: str,
+        case: str = 'worst',
     ) -> None:
         self._target_objects = target_objects
         self._case = case
@@ -50,17 +50,19 @@ class LatencyStackedBar:
             Latency dataframe.
 
         """
-        # TODO: apply xaxis_type
-
         # NOTE: returned columns aren't used because they don't include 'start time'
         # TODO: delete 1e-6
         stacked_bar_dict, _ = self.to_stacked_bar_dict()
         millisecond_dict: Dict[str, List[float]] = {}
-        print(stacked_bar_dict.keys())
-        for column in stacked_bar_dict.keys():
-            millisecond_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
-        df = pd.DataFrame(millisecond_dict)
-        return df
+        if xaxis_type == 'system_time':
+            for column in stacked_bar_dict:
+                millisecond_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
+            df = pd.DataFrame(millisecond_dict)
+            return df
+        elif xaxis_type == 'index':
+            pass
+        else:  # sim_time
+            raise NotImplementedError()
 
     def to_stacked_bar_dict(
         self,
