@@ -56,7 +56,8 @@ class LatencyStackedBar:
         millisecond_dict: Dict[str, List[float]] = {}
         if xaxis_type == 'system_time':
             for column in stacked_bar_dict:
-                millisecond_dict[column] = [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
+                millisecond_dict[column] = \
+                    [timestamp * 1e-6 for timestamp in stacked_bar_dict[column]]
             df = pd.DataFrame(millisecond_dict)
             return df
         elif xaxis_type == 'index':

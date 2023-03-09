@@ -19,7 +19,8 @@ from typing import Dict, List
 from bokeh.models import HoverTool
 from bokeh.plotting import ColumnDataSource
 
-from .legend import HoverCreator, HoverKeys, LegendManager, HoverSource
+from .legend import HoverCreator, HoverKeys, HoverSource, LegendManager
+
 
 class StackedBarSource:
     """Class to generate stacked bar source."""
