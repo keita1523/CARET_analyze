@@ -19,7 +19,7 @@ from typing import Dict, List
 from bokeh.models import HoverTool
 from bokeh.plotting import ColumnDataSource
 
-from .legend import HoverCreator, LegendKeys, LegendManager, LegendSource
+from .legend import HoverCreator, HoverKeys, LegendManager, HoverSource
 
 class StackedBarSource:
     """Class to generate stacked bar source."""
@@ -31,15 +31,15 @@ class StackedBarSource:
         frame_min: float,
         xaxis_type: str,
     ) -> None:
-        self._legend_keys = LegendKeys('stacked_bar', target_object)
-        self._hover = HoverCreator(self._legend_keys)
-        self._legend_source = LegendSource(legend_manager, self._legend_keys)
+        self._hover_keys = HoverKeys('stacked_bar', target_object)
+        self._hover = HoverCreator(self._hover_keys)
+        self._hover_source = HoverSource(legend_manager, self._hover_keys)
         self._frame_min = frame_min
         self._xaxis_type = xaxis_type
 
     def create_hover(self, options: dict = {}) -> HoverTool:
         """
-        Create HoverTool based on the legend keys.
+        Create HoverTool based on the hover keys.
 
         Parameters
         ----------
@@ -64,10 +64,10 @@ class StackedBarSource:
         source = ColumnDataSource(data)
         source.add(y_labels, 'legend')
         source.add(x_width_list, 'x_width_list')
-        legend_source = self._legend_source.generate(target_object)
+        hover_source = self._hover_source.generate(target_object)
 
-        for description in legend_source:
-            source.add(legend_source[description] * len(x_width_list), description)
+        for description in hover_source:
+            source.add(hover_source[description] * len(x_width_list), description)
         for y_label, bottom_label in zip(y_labels[1:], bottom_labels):
             source.add(data[y_label], bottom_label)
         return source
