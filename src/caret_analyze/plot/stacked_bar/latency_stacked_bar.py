@@ -60,7 +60,7 @@ class LatencyStackedBar:
             df = pd.DataFrame(millisecond_dict)
             return df
         elif xaxis_type == 'index':
-            pass
+            raise NotImplementedError()
         else:  # sim_time
             raise NotImplementedError()
 
